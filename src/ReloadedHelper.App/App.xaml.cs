@@ -133,7 +133,6 @@ public partial class App : Application
 
     private static void ApplySortAllGames(MainViewModel mainVm, ReloadedInstall install)
     {
-        // Build dependency map: modId → list of modIds it depends on
         var depMap = mainVm.AllMods.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<string>)kv.Value.Dependencies,
@@ -144,25 +143,26 @@ public partial class App : Application
         {
             if (game.SortedMods.Count == 0) continue;
 
-            var sorted = LoadOrderSorter.Sort(game.SortedMods, depMap);
+            var enabledSet    = new HashSet<string>(game.EnabledMods, StringComparer.OrdinalIgnoreCase);
+            var enabledGroup  = game.SortedMods.Where(enabledSet.Contains).ToList();
+            var disabledGroup = game.SortedMods.Where(id => !enabledSet.Contains(id)).ToList();
 
-            // Check if order actually changed
-            bool changed = !sorted.SequenceEqual(
+            var sortedEnabled  = LoadOrderSorter.Sort(enabledGroup,  depMap);
+            var sortedDisabled = LoadOrderSorter.Sort(disabledGroup, depMap);
+            var newSorted = sortedEnabled.Concat(sortedDisabled).ToList();
+
+            bool changed = !newSorted.SequenceEqual(
                 game.SortedMods, StringComparer.OrdinalIgnoreCase);
             if (!changed) continue;
 
             var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
             if (!File.Exists(configPath)) continue;
 
-            AppConfigWriter.WriteOrder(configPath, game.AppId, sorted);
+            AppConfigWriter.WriteOrder(configPath, game.AppId, newSorted);
             anyChanged = true;
         }
 
-        if (anyChanged)
-        {
-            // Reload from disk so UI shows the sorted order
-            mainVm.LoadFrom(install);
-        }
+        if (anyChanged) mainVm.LoadFrom(install);
     }
 
     private static ReloadedInstall? ResolveInstall(SettingsViewModel sv)
