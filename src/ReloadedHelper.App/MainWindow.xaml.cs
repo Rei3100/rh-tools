@@ -1,6 +1,6 @@
 // src/ReloadedHelper.App/MainWindow.xaml.cs
 using System.Windows;
-using H.NotifyIcon;
+using H.NotifyIcon; // H.NotifyIcon.Wpf パッケージ — TaskbarIcon は H.NotifyIcon 名前空間
 using ReloadedHelper.Core;
 
 namespace ReloadedHelper.App;

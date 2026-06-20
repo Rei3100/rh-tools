@@ -26,5 +26,6 @@ public partial class SettingsView : UserControl
             return;
         }
         Vm.ReloadedInstallPath = install.RootPath;
+        MessageBox.Show("フォルダの変更は次回起動時に反映されます。");
     }
 }

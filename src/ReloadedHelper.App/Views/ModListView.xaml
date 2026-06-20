@@ -259,7 +259,8 @@
                             </TextBlock.Style>
                             <Hyperlink NavigateUri="{Binding Info.ProjectUrl}"
                                        Foreground="{DynamicResource AccentBrush}"
-                                       TextDecorations="None">
+                                       TextDecorations="None"
+                                       RequestNavigate="Hyperlink_RequestNavigate">
                                 <Run Text="{Binding Info.ProjectUrl}"/>
                             </Hyperlink>
                         </TextBlock>
