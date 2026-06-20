@@ -1,0 +1,47 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Extract version from tag
+        shell: pwsh
+        run: |
+          $ver = $env:GITHUB_REF_NAME -replace '^v', ''
+          echo "VERSION=$ver" >> $env:GITHUB_ENV
+
+      - run: dotnet restore
+
+      - run: dotnet build --configuration Release --no-restore
+
+      - run: dotnet test --configuration Release --no-build
+
+      - name: Publish single-file exe
+        shell: pwsh
+        run: |
+          dotnet publish src/ReloadedHelper.App/ReloadedHelper.App.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=$env:VERSION `
+            -o publish
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: publish/ReloadedHelper.App.exe
+          generate_release_notes: true
