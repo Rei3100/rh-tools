@@ -53,4 +53,26 @@ public class AppConfigWriterTests : IDisposable
         var original = AppConfigParser.Parse(File.ReadAllText(backups[0]), Path.GetTempPath());
         Assert.Equal(new[] { "A", "B" }, original.SortedMods);
     }
+
+    [Fact]
+    public void WriteEnabledAndSorted_UpdatesBothFields_PreservesOthers()
+    {
+        File.WriteAllText(_tmp, """
+            {
+              "AppId": "test.exe",
+              "AppName": "TestGame",
+              "EnabledMods": ["A", "B"],
+              "SortedMods": ["A", "B", "C"]
+            }
+            """);
+
+        AppConfigWriter.WriteEnabledAndSorted(_tmp, "test.exe",
+            newEnabledMods: new[] { "B" },
+            newSortedMods:  new[] { "B", "C", "A" });
+
+        var result = AppConfigParser.Parse(File.ReadAllText(_tmp), Path.GetTempPath());
+        Assert.Equal(new[] { "B" },          result.EnabledMods);
+        Assert.Equal(new[] { "B", "C", "A" }, result.SortedMods);
+        Assert.Equal("TestGame",              result.AppName); // other fields preserved
+    }
 }
