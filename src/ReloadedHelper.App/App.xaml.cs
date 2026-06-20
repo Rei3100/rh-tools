@@ -92,7 +92,9 @@ public partial class App : Application
 
             var currentVer = Assembly.GetExecutingAssembly()
                                      .GetName().Version?.ToString(3) ?? "0.0.0";
-            if (latestVer == currentVer) return;
+            if (!Version.TryParse(latestVer, out var latest)) return;
+            if (!Version.TryParse(currentVer, out var current)) return;
+            if (latest <= current) return;
 
             // Download new exe
             var tempPath = Path.Combine(Path.GetTempPath(), "rh-tools-update.exe");
