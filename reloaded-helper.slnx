@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ReloadedHelper.App/ReloadedHelper.App.csproj" />
+    <Project Path="src/ReloadedHelper.Core/ReloadedHelper.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ReloadedHelper.Core.Tests/ReloadedHelper.Core.Tests.csproj" />
+  </Folder>
+</Solution>
