@@ -1,5 +1,8 @@
+using System.Windows.Controls;
+
 namespace ReloadedHelper.App.Views;
-public partial class ModListView : System.Windows.Controls.UserControl
+
+public partial class ModListView : UserControl
 {
     public ModListView() => InitializeComponent();
 }

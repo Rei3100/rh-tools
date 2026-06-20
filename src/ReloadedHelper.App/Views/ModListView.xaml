@@ -1,5 +1,280 @@
+<!-- src/ReloadedHelper.App/Views/ModListView.xaml -->
 <UserControl x:Class="ReloadedHelper.App.Views.ModListView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <TextBlock Text="MOD 一覧（実装中）" Foreground="White"/>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:app="clr-namespace:ReloadedHelper.App"
+             Background="{DynamicResource BgMainBrush}">
+    <UserControl.Resources>
+        <app:PathToImageConverter x:Key="Img"/>
+    </UserControl.Resources>
+
+    <!-- DataContext = MainViewModel -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── 上部バー ── -->
+        <Border Grid.Row="0" Background="{DynamicResource BgBarBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ゲームタブ -->
+                <ListBox Grid.Column="0"
+                         ItemsSource="{Binding Games}"
+                         SelectedItem="{Binding SelectedGame}"
+                         DisplayMemberPath="DisplayName"
+                         Background="Transparent" BorderThickness="0"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                         ItemContainerStyle="{DynamicResource GameTabItemStyle}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+
+                <!-- 検索ボックス（角丸外枠 + 虫眼鏡 + placeholder） -->
+                <Border Grid.Column="1"
+                        Background="{DynamicResource BgInputBrush}"
+                        BorderBrush="{DynamicResource BorderInputBrush}"
+                        BorderThickness="1" CornerRadius="6"
+                        Margin="8,10,12,10" Padding="8,0" MinWidth="200">
+                    <Grid VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#x1F50D;"
+                                   Foreground="{DynamicResource TextLabelBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <Grid Grid.Column="1">
+                            <TextBox x:Name="SearchBox"
+                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" BorderThickness="0" Padding="0,6"
+                                     FontSize="{DynamicResource FontSizeSearch}"
+                                     Foreground="{DynamicResource TextBodyBrush}"
+                                     CaretBrush="{DynamicResource TextBodyBrush}"
+                                     VerticalAlignment="Center">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Background"      Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Padding"         Value="0,6"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="TextBox">
+                                                    <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                                                  HorizontalScrollBarVisibility="Hidden"
+                                                                  VerticalScrollBarVisibility="Hidden"/>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <!-- プレースホルダ -->
+                            <TextBlock Text="MOD を検索..."
+                                       Foreground="{DynamicResource TextMetaBrush}"
+                                       FontSize="{DynamicResource FontSizeSearch}"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ── 本体：MOD リスト + 詳細パネル ── -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="280"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- MOD リスト -->
+            <DockPanel Grid.Column="0" Margin="12,8,6,8">
+                <!-- 件数ヘッダ -->
+                <TextBlock DockPanel.Dock="Top" Margin="4,0,0,6"
+                           FontSize="{DynamicResource FontSizeLabel}"
+                           Foreground="{DynamicResource TextMetaBrush}">
+                    <Run Text="読み込み順 ・ 全 "/>
+                    <Run Text="{Binding Entries.Count, Mode=OneWay}"/>
+                    <Run Text=" 件"/>
+                </TextBlock>
+
+                <ListBox ItemsSource="{Binding Entries}"
+                         SelectedItem="{Binding SelectedEntry}"
+                         ItemContainerStyle="{DynamicResource ModCardItemStyle}"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Height="54">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="36"/>
+                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="52"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- 順番 -->
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding Order}"
+                                           FontFamily="{DynamicResource MonoFont}"
+                                           FontSize="{DynamicResource FontSizeOrder}"
+                                           Foreground="{DynamicResource TextMetaBrush}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,6,0"/>
+
+                                <!-- サムネ 42×42 角丸8 -->
+                                <Border Grid.Column="1" Width="42" Height="42" CornerRadius="8"
+                                        Margin="0,0,8,0" VerticalAlignment="Center" ClipToBounds="True">
+                                    <Grid>
+                                        <Border>
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#2a2c30" Offset="0"/>
+                                                    <GradientStop Color="#1a1c1f" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+                                        <Image Source="{Binding Info.IconPath, Converter={StaticResource Img}}"
+                                               Stretch="UniformToFill"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 名前 + 作者 -->
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               FontSize="{DynamicResource FontSizeCardTitle}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextBodyBrush}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Info.ModAuthor}"
+                                               FontSize="{DynamicResource FontSizeCardBody}"
+                                               Foreground="{DynamicResource TextLabelBrush}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+
+                                <!-- ON/OFF トグル（表示専用） -->
+                                <ToggleButton Grid.Column="3"
+                                             IsChecked="{Binding Enabled, Mode=OneWay}"
+                                             Style="{DynamicResource ToggleSwitchStyle}"
+                                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <!-- 詳細パネル（右 280px） -->
+            <Border Grid.Column="1" Background="{DynamicResource BgBarBrush}">
+                <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                    <StackPanel DataContext="{Binding SelectedEntry}" Margin="12,12,12,12">
+
+                        <!-- ヒーローサムネ 横幅いっぱい × 120 -->
+                        <Border CornerRadius="10" Height="120" Margin="0,0,0,12" ClipToBounds="True">
+                            <Grid>
+                                <Border>
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#2a2c30" Offset="0"/>
+                                            <GradientStop Color="#141518" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <Image Source="{Binding Info.IconPath, Converter={StaticResource Img}}"
+                                       Stretch="UniformToFill"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- MOD 名 -->
+                        <TextBlock Text="{Binding DisplayName}"
+                                   FontSize="{DynamicResource FontSizeDetailTitle}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,0,0,4"/>
+
+                        <!-- ID（等幅） -->
+                        <TextBlock Text="{Binding ModId}"
+                                   FontFamily="{DynamicResource MonoFont}"
+                                   FontSize="{DynamicResource FontSizeDetailId}"
+                                   Foreground="{DynamicResource TextMetaBrush}"
+                                   TextTrimming="CharacterEllipsis" Margin="0,0,0,10"/>
+
+                        <!-- 作者 -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                            <TextBlock Text="作者: " FontSize="{DynamicResource FontSizeDetailBody}"
+                                       Foreground="{DynamicResource TextLabelBrush}"/>
+                            <TextBlock Text="{Binding Info.ModAuthor}"
+                                       FontSize="{DynamicResource FontSizeDetailBody}"
+                                       Foreground="{DynamicResource TextDetailBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <!-- バージョン -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="バージョン: " FontSize="{DynamicResource FontSizeDetailBody}"
+                                       Foreground="{DynamicResource TextLabelBrush}"/>
+                            <TextBlock Text="{Binding Info.ModVersion}"
+                                       FontSize="{DynamicResource FontSizeDetailBody}"
+                                       Foreground="{DynamicResource TextDetailBrush}"/>
+                        </StackPanel>
+
+                        <!-- URL（null / 空のとき非表示） -->
+                        <TextBlock Margin="0,0,0,10">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Info.ProjectUrl}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Info.ProjectUrl}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                            <Hyperlink NavigateUri="{Binding Info.ProjectUrl}"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       TextDecorations="None">
+                                <Run Text="{Binding Info.ProjectUrl}"/>
+                            </Hyperlink>
+                        </TextBlock>
+
+                        <!-- 区切り線 -->
+                        <Border Height="1" Background="{DynamicResource BgSeparatorBrush}" Margin="0,0,0,10"/>
+
+                        <!-- 説明文 -->
+                        <TextBlock Text="{Binding Info.ModDescription}"
+                                   FontSize="{DynamicResource FontSizeDetailBody}"
+                                   Foreground="{DynamicResource TextDetailBrush}"
+                                   TextWrapping="Wrap" LineHeight="22"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
 </UserControl>
