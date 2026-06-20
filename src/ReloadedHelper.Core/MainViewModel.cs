@@ -9,6 +9,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private IReadOnlyDictionary<string, ModInfo> _catalog = new Dictionary<string, ModInfo>();
     private IReadOnlyList<ModLoadEntry> _allEntries = Array.Empty<ModLoadEntry>();
 
+    public IReadOnlyDictionary<string, ModInfo> AllMods => _catalog;
+
     public ObservableCollection<GameInfo> Games { get; } = new();
     public ObservableCollection<ModLoadEntry> Entries { get; } = new();
 

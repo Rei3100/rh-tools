@@ -56,6 +56,7 @@ public partial class App : Application
 
         var modListVm = new MainViewModel();
         modListVm.LoadFrom(install);
+        ApplySortAllGames(modListVm, install);   // 依存関係トポロジーで自動並び替え
 
         // RememberLastGame: 前回のゲームを復元
         if (settingsVm.RememberLastGame && settingsVm.LastGameId is { } lastId)
@@ -75,6 +76,40 @@ public partial class App : Application
         var window = new MainWindow(shell);
         window.WindowState = WindowState.Maximized;
         window.Show();
+    }
+
+    private static void ApplySortAllGames(MainViewModel mainVm, ReloadedInstall install)
+    {
+        // Build dependency map: modId → list of modIds it depends on
+        var depMap = mainVm.AllMods.ToDictionary(
+            kv => kv.Key,
+            kv => (IReadOnlyList<string>)kv.Value.Dependencies,
+            StringComparer.OrdinalIgnoreCase);
+
+        bool anyChanged = false;
+        foreach (var game in mainVm.Games)
+        {
+            if (game.EnabledMods.Count == 0) continue;
+
+            var sorted = LoadOrderSorter.Sort(game.EnabledMods, depMap);
+
+            // Check if order actually changed
+            bool changed = !sorted.SequenceEqual(
+                game.EnabledMods, StringComparer.OrdinalIgnoreCase);
+            if (!changed) continue;
+
+            var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
+            if (!File.Exists(configPath)) continue;
+
+            AppConfigWriter.WriteOrder(configPath, game.AppId, sorted);
+            anyChanged = true;
+        }
+
+        if (anyChanged)
+        {
+            // Reload from disk so UI shows the sorted order
+            mainVm.LoadFrom(install);
+        }
     }
 
     private static ReloadedInstall? ResolveInstall(SettingsViewModel sv)
