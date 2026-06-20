@@ -1,3 +1,5 @@
+// src/ReloadedHelper.App/App.xaml.cs
+using System.Linq;
 using System.Windows;
 using Microsoft.Win32;
 using ReloadedHelper.Core;
@@ -11,31 +13,46 @@ public partial class App : Application
         base.OnStartup(e);
 
         var settingsPath = SettingsStore.DefaultPath;
-        var settings = SettingsStore.Load(settingsPath);
+        var settingsVm   = new SettingsViewModel(settingsPath);
 
-        var install = ResolveInstall(settings);
+        var install = ResolveInstall(settingsVm);
         if (install is null) { Shutdown(); return; }
 
-        settings.ReloadedInstallPath = install.RootPath;
-        SettingsStore.Save(settingsPath, settings);
+        settingsVm.ReloadedInstallPath = install.RootPath;
 
-        var vm = new MainViewModel();
-        vm.LoadFrom(install);
-        new MainWindow(vm).Show();
+        var modListVm = new MainViewModel();
+        modListVm.LoadFrom(install);
+
+        // RememberLastGame: 前回のゲームを復元
+        if (settingsVm.RememberLastGame && settingsVm.LastGameId is { } lastId)
+        {
+            var last = modListVm.Games.FirstOrDefault(g => g.AppId == lastId);
+            if (last is not null) modListVm.SelectedGame = last;
+        }
+
+        // SelectedGame が変わったら LastGameId を保存
+        modListVm.PropertyChanged += (_, ev) =>
+        {
+            if (ev.PropertyName == nameof(MainViewModel.SelectedGame) && settingsVm.RememberLastGame)
+                settingsVm.LastGameId = modListVm.SelectedGame?.AppId;
+        };
+
+        var shell = new ShellViewModel(modListVm, settingsVm);
+        new MainWindow(shell).Show();
     }
 
-    private static ReloadedInstall? ResolveInstall(AppSettings settings)
+    private static ReloadedInstall? ResolveInstall(SettingsViewModel sv)
     {
-        if (!string.IsNullOrEmpty(settings.ReloadedInstallPath))
+        if (!string.IsNullOrEmpty(sv.ReloadedInstallPath))
         {
-            var saved = new ReloadedInstall(settings.ReloadedInstallPath);
+            var saved = new ReloadedInstall(sv.ReloadedInstallPath);
             if (saved.IsValid) return saved;
         }
         while (true)
         {
             var dlg = new OpenFolderDialog
             {
-                Title = "Reloaded-II のフォルダを選んでください (Reloaded-II.exe がある場所)"
+                Title = "Reloaded-II のフォルダを選んでください"
             };
             if (dlg.ShowDialog() != true) return null;
             var picked = new ReloadedInstall(dlg.FolderName);
