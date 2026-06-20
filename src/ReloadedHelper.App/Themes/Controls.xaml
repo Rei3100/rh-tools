@@ -1,0 +1,176 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ── TextBlock デフォルト ── -->
+    <Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource MainFont}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+    </Style>
+
+    <!-- ── ScrollViewer デフォルト（スクロールバー非表示） ── -->
+    <Style TargetType="ScrollViewer">
+        <Setter Property="VerticalScrollBarVisibility"   Value="Hidden"/>
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+    </Style>
+
+    <!-- ── TextBox デフォルト（ダーク・角丸） ── -->
+    <Style TargetType="TextBox">
+        <Setter Property="Background"              Value="{DynamicResource BgInputBrush}"/>
+        <Setter Property="Foreground"              Value="{DynamicResource TextBodyBrush}"/>
+        <Setter Property="BorderBrush"             Value="{DynamicResource BorderInputBrush}"/>
+        <Setter Property="BorderThickness"         Value="1"/>
+        <Setter Property="CaretBrush"              Value="{DynamicResource TextBodyBrush}"/>
+        <Setter Property="SelectionBrush"          Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Padding"                 Value="8,6"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6">
+                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Hidden"
+                                      Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush"
+                                    Value="{DynamicResource AccentBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── サイドナビ ボタン ── -->
+    <Style x:Key="NavButtonStyle" TargetType="Button">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Width"           Value="64"/>
+        <Setter Property="Height"          Value="56"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                            CornerRadius="8" Margin="6,2">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background"
+                                    Value="{DynamicResource BgNavSelectedBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── ゲームタブ ListBoxItem ── -->
+    <Style x:Key="GameTabItemStyle" TargetType="ListBoxItem">
+        <Setter Property="Background"              Value="Transparent"/>
+        <Setter Property="Foreground"              Value="{DynamicResource TextLabelBrush}"/>
+        <Setter Property="BorderThickness"         Value="0"/>
+        <Setter Property="Padding"                 Value="16,0"/>
+        <Setter Property="Margin"                  Value="2,6"/>
+        <Setter Property="Cursor"                  Value="Hand"/>
+        <Setter Property="FontSize"                Value="{DynamicResource FontSizeGameTab}"/>
+        <Setter Property="FontFamily"              Value="{DynamicResource MainFont}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                            CornerRadius="6" Padding="{TemplateBinding Padding}"
+                            Height="36">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background"
+                                    Value="{DynamicResource BgNavSelectedBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background"
+                                    Value="{DynamicResource BgNavSelectedBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── MOD カード ListBoxItem ── -->
+    <Style x:Key="ModCardItemStyle" TargetType="ListBoxItem">
+        <Setter Property="Background"              Value="{DynamicResource BgCardBrush}"/>
+        <Setter Property="Foreground"              Value="{DynamicResource TextBodyBrush}"/>
+        <Setter Property="BorderBrush"             Value="Transparent"/>
+        <Setter Property="BorderThickness"         Value="1"/>
+        <Setter Property="Margin"                  Value="0,1"/>
+        <Setter Property="Padding"                 Value="8,0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background"
+                                    Value="{DynamicResource BgCardSelectedBrush}"/>
+                            <Setter TargetName="Bd" Property="BorderBrush"
+                                    Value="{DynamicResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background"
+                                    Value="{DynamicResource BgCardSelectedBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── ON/OFF トグルスイッチ（表示専用） ── -->
+    <Style x:Key="ToggleSwitchStyle" TargetType="ToggleButton">
+        <Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="Focusable"        Value="False"/>
+        <Setter Property="Width"            Value="44"/>
+        <Setter Property="Height"           Value="24"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid Width="44" Height="24">
+                        <Border x:Name="Track" CornerRadius="12"
+                                Background="{DynamicResource BgToggleOffBrush}"/>
+                        <Ellipse x:Name="Knob" Width="18" Height="18" Fill="White"
+                                 HorizontalAlignment="Left" VerticalAlignment="Center"
+                                 Margin="3,0,0,0"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Track" Property="Background"
+                                    Value="{DynamicResource AccentBrush}"/>
+                            <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+                            <Setter TargetName="Knob" Property="Margin" Value="0,0,3,0"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

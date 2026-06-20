@@ -1,0 +1,17 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <FontFamily x:Key="MainFont">BIZ UDPGothic, BIZ UDP Gothic, Meiryo, sans-serif</FontFamily>
+    <FontFamily x:Key="MonoFont">Consolas, Cascadia Mono, monospace</FontFamily>
+
+    <!-- WPF FontSize は DIP (px@96dpi)。spec の px 値をそのまま使用 -->
+    <sys:Double x:Key="FontSizeCardTitle">15.3</sys:Double>
+    <sys:Double x:Key="FontSizeCardBody">12.7</sys:Double>
+    <sys:Double x:Key="FontSizeOrder">13</sys:Double>
+    <sys:Double x:Key="FontSizeDetailTitle">17</sys:Double>
+    <sys:Double x:Key="FontSizeDetailBody">13</sys:Double>
+    <sys:Double x:Key="FontSizeDetailId">11.5</sys:Double>
+    <sys:Double x:Key="FontSizeLabel">11</sys:Double>
+    <sys:Double x:Key="FontSizeGameTab">14</sys:Double>
+    <sys:Double x:Key="FontSizeSearch">13.5</sys:Double>
+</ResourceDictionary>
