@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
@@ -76,6 +78,55 @@ public partial class App : Application
         var window = new MainWindow(shell);
         window.WindowState = WindowState.Maximized;
         window.Show();
+        _ = Task.Run(CheckAndApplyUpdateAsync); // バックグラウンドで更新確認
+    }
+
+    private static async Task CheckAndApplyUpdateAsync()
+    {
+        try
+        {
+            using var http = new HttpClient();
+            var checker = new UpdateChecker(http);
+            var (latestVer, downloadUrl) = await checker.CheckAsync();
+            if (latestVer is null || downloadUrl is null) return;
+
+            var currentVer = Assembly.GetExecutingAssembly()
+                                     .GetName().Version?.ToString(3) ?? "0.0.0";
+            if (latestVer == currentVer) return;
+
+            // Download new exe
+            var tempPath = Path.Combine(Path.GetTempPath(), "rh-tools-update.exe");
+            var data = await http.GetByteArrayAsync(downloadUrl);
+            await File.WriteAllBytesAsync(tempPath, data);
+
+            // Apply update: PowerShell replaces exe after this process exits
+            var currentExe = Environment.ProcessPath
+                             ?? Path.Combine(
+                                 AppContext.BaseDirectory, "ReloadedHelper.App.exe");
+            var script =
+                $"Start-Sleep -Milliseconds 1500; " +
+                $"Copy-Item -Path '{tempPath}' -Destination '{currentExe}' -Force; " +
+                $"Start-Process -FilePath '{currentExe}'";
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "powershell",
+                Arguments = $"-WindowStyle Hidden -Command \"{script}\"",
+                UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            });
+
+            Current.Dispatcher.Invoke(() =>
+            {
+                MessageBox.Show(
+                    $"v{latestVer} に更新します。アプリを再起動します。",
+                    "rh-tools 更新",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                Current.Shutdown();
+            });
+        }
+        catch { /* 更新失敗は無視して起動を続ける */ }
     }
 
     private static void ApplySortAllGames(MainViewModel mainVm, ReloadedInstall install)
