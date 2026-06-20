@@ -7,7 +7,7 @@
                    FontSize="20" FontWeight="Bold"
                    Foreground="{DynamicResource TextPrimaryBrush}"
                    Margin="0,0,0,8"/>
-        <TextBlock Text="バージョン 0.2.0"
+        <TextBlock Text="{Binding VersionString}"
                    FontSize="{DynamicResource FontSizeDetailBody}"
                    Foreground="{DynamicResource TextLabelBrush}"
                    Margin="0,0,0,16"/>
