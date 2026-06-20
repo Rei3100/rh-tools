@@ -38,9 +38,10 @@ public partial class MainWindow : Window
     private void RestoreWindow()
     {
         Show();
-        WindowState   = WindowState.Normal;
+        WindowState   = WindowState.Maximized;
         ShowInTaskbar = true;
         Activate();
+        _tray.Visibility = Visibility.Collapsed;
     }
 
     // ── 終了 ──

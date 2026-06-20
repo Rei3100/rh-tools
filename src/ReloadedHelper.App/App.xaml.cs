@@ -1,5 +1,9 @@
 // src/ReloadedHelper.App/App.xaml.cs
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using Microsoft.Win32;
 using ReloadedHelper.Core;
@@ -8,8 +12,38 @@ namespace ReloadedHelper.App;
 
 public partial class App : Application
 {
+    private static Mutex? _appMutex;
+
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    private const int SW_RESTORE = 9;
+
+    private static void ActivateExistingInstance()
+    {
+        var currentId = Environment.ProcessId;
+        var name = Path.GetFileNameWithoutExtension(
+            Environment.ProcessPath ?? "ReloadedHelper.App");
+        foreach (var proc in Process.GetProcessesByName(name))
+        {
+            if (proc.Id == currentId) continue;
+            var hwnd = proc.MainWindowHandle;
+            if (hwnd == IntPtr.Zero) continue;
+            ShowWindow(hwnd, SW_RESTORE);
+            SetForegroundWindow(hwnd);
+            return;
+        }
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        _appMutex = new Mutex(true, "Global\\ReloadedHelper_v1", out bool createdNew);
+        if (!createdNew)
+        {
+            ActivateExistingInstance();
+            Shutdown();
+            return;
+        }
+
         base.OnStartup(e);
 
         var settingsPath = SettingsStore.DefaultPath;
@@ -38,7 +72,9 @@ public partial class App : Application
         };
 
         var shell = new ShellViewModel(modListVm, settingsVm);
-        new MainWindow(shell).Show();
+        var window = new MainWindow(shell);
+        window.WindowState = WindowState.Maximized;
+        window.Show();
     }
 
     private static ReloadedInstall? ResolveInstall(SettingsViewModel sv)
