@@ -1,5 +1,7 @@
 namespace ReloadedHelper.Core;
 
+public enum FilterMode { All, EnabledOnly, DisabledOnly }
+
 public static class LoadOrderBuilder
 {
     public static IReadOnlyList<ModLoadEntry> Build(GameInfo game, IReadOnlyDictionary<string, ModInfo> catalog)
@@ -18,12 +20,27 @@ public static class LoadOrderBuilder
 
 public static class ModFilter
 {
-    public static IReadOnlyList<ModLoadEntry> Filter(IReadOnlyList<ModLoadEntry> entries, string? search)
+    public static IReadOnlyList<ModLoadEntry> Filter(
+        IReadOnlyList<ModLoadEntry> entries, string? search,
+        FilterMode mode = FilterMode.All)
     {
-        if (string.IsNullOrWhiteSpace(search)) return entries;
-        var s = search.Trim();
-        return entries.Where(e =>
-            e.ModId.Contains(s, StringComparison.OrdinalIgnoreCase) ||
-            e.DisplayName.Contains(s, StringComparison.OrdinalIgnoreCase)).ToList();
+        IEnumerable<ModLoadEntry> result = entries;
+
+        result = mode switch
+        {
+            FilterMode.EnabledOnly  => result.Where(e => e.Enabled),
+            FilterMode.DisabledOnly => result.Where(e => !e.Enabled),
+            _                       => result
+        };
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim();
+            result = result.Where(e =>
+                e.ModId.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                e.DisplayName.Contains(s, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return result.ToList();
     }
 }
