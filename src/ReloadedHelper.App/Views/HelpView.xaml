@@ -1,0 +1,5 @@
+<UserControl x:Class="ReloadedHelper.App.Views.HelpView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <TextBlock Text="ヘルプ（実装中）" Foreground="White"/>
+</UserControl>
