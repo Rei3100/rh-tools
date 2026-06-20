@@ -23,12 +23,21 @@ public sealed class ShellViewModel : INotifyPropertyChanged
             Notify(nameof(IsModListActive));
             Notify(nameof(IsSettingsActive));
             Notify(nameof(IsHelpActive));
+            Notify(nameof(IsOverlayVisible));
+            Notify(nameof(CurrentOverlayView));
         }
     }
 
     public bool IsModListActive  => CurrentView == ModListVm;
     public bool IsSettingsActive => CurrentView == SettingsVm;
     public bool IsHelpActive     => CurrentView == HelpVm;
+
+    public bool IsOverlayVisible => IsSettingsActive || IsHelpActive;
+
+    public object? CurrentOverlayView =>
+        IsSettingsActive ? SettingsVm :
+        IsHelpActive ? (object?)HelpVm :
+        null;
 
     public ShellViewModel(MainViewModel modListVm, SettingsViewModel settingsVm)
     {

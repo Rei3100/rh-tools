@@ -10,6 +10,10 @@
         StateChanged="Window_StateChanged"
         Closed="Window_Closed">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+    </Window.Resources>
+
     <Grid>
         <Grid.LayoutTransform>
             <ScaleTransform ScaleX="{Binding SettingsVm.Scale}"
@@ -77,18 +81,52 @@
         </Border>
 
         <!-- ── コンテンツエリア ── -->
-        <ContentControl Grid.Column="1" Content="{Binding CurrentView}">
-            <ContentControl.Resources>
-                <DataTemplate DataType="{x:Type core:MainViewModel}">
-                    <views:ModListView/>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type core:SettingsViewModel}">
-                    <views:SettingsView/>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type app:HelpViewModel}">
-                    <views:HelpView/>
-                </DataTemplate>
-            </ContentControl.Resources>
-        </ContentControl>
+        <Grid Grid.Column="1">
+
+            <!-- 常に表示される MOD 一覧 -->
+            <views:ModListView DataContext="{Binding ModListVm}"/>
+
+            <!-- 設定・ヘルプ オーバーレイ -->
+            <Grid Visibility="{Binding IsOverlayVisible,
+                               Converter={StaticResource BoolToVisConverter}}">
+
+                <!-- 半透明バックドロップ -->
+                <Rectangle Fill="Black" Opacity="0.45"/>
+
+                <!-- パネル本体 -->
+                <Border Width="560" MaxHeight="620"
+                        Background="{DynamicResource BgBarBrush}"
+                        BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                        CornerRadius="12"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 閉じるボタン -->
+                        <Button Grid.Row="0" Content="✕"
+                                Width="32" Height="32"
+                                HorizontalAlignment="Right" Margin="8"
+                                Click="CloseOverlay_Click"
+                                Style="{StaticResource NavButtonStyle}"/>
+
+                        <!-- コンテンツ（設定 or ヘルプ） -->
+                        <ContentControl Grid.Row="1"
+                                        Content="{Binding CurrentOverlayView}">
+                            <ContentControl.Resources>
+                                <DataTemplate DataType="{x:Type core:SettingsViewModel}">
+                                    <views:SettingsView/>
+                                </DataTemplate>
+                                <DataTemplate DataType="{x:Type app:HelpViewModel}">
+                                    <views:HelpView/>
+                                </DataTemplate>
+                            </ContentControl.Resources>
+                        </ContentControl>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
     </Grid>
 </Window>

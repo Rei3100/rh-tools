@@ -24,6 +24,20 @@ public partial class MainWindow : Window
     private void NavSettings_Click(object sender, RoutedEventArgs e) => _shell.ShowSettings();
     private void NavHelp_Click(object sender, RoutedEventArgs e)     => _shell.ShowHelp();
 
+    // ── オーバーレイを閉じる ──
+    private void CloseOverlay_Click(object sender, RoutedEventArgs e)
+        => _shell.ShowModList();
+
+    protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Escape && _shell.IsOverlayVisible)
+        {
+            _shell.ShowModList();
+            e.Handled = true;
+        }
+        base.OnKeyDown(e);
+    }
+
     // ── 最小化 → トレイ ──
     private void Window_StateChanged(object sender, EventArgs e)
     {
