@@ -8,10 +8,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
 {
     private IReadOnlyDictionary<string, ModInfo> _catalog = new Dictionary<string, ModInfo>();
     private IReadOnlyList<ModLoadEntry> _allEntries = Array.Empty<ModLoadEntry>();
+    private ReloadedInstall? _install;
 
     public IReadOnlyDictionary<string, ModInfo> AllMods => _catalog;
 
-    public ObservableCollection<GameInfo> Games { get; } = new();
+    public ObservableCollection<GameInfo> Games  { get; } = new();
     public ObservableCollection<ModLoadEntry> Entries { get; } = new();
 
     private GameInfo? _selectedGame;
@@ -58,13 +59,75 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private FilterMode _filterMode = FilterMode.All;
+    public FilterMode FilterMode
+    {
+        get => _filterMode;
+        set
+        {
+            if (_filterMode == value) return;
+            _filterMode = value;
+            OnChanged();
+            ApplyFilter();
+        }
+    }
+
+    public string EntryCountLabel
+    {
+        get
+        {
+            var total = _allEntries.Count;
+            var shown = Entries.Count;
+            return _filterMode switch
+            {
+                FilterMode.EnabledOnly  => $"読み込み順 ・ 有効 {shown} / 全 {total} 件",
+                FilterMode.DisabledOnly => $"読み込み順 ・ 無効 {shown} / 全 {total} 件",
+                _                       => $"読み込み順 ・ 全 {total} 件"
+            };
+        }
+    }
+
     public void LoadFrom(ReloadedInstall install)
     {
+        _install = install;
         _catalog = ModCatalog.LoadAll(install.ModsDir);
         Games.Clear();
         foreach (var g in GameCatalog.LoadAll(install.AppsDir)) Games.Add(g);
         SelectedGame = Games.Count > 0 ? Games[0] : null;
         if (SelectedGame is null) RebuildEntries();
+    }
+
+    public void ToggleEnabled(ModLoadEntry entry)
+    {
+        if (SelectedGame is null || _install is null) return;
+
+        var game = SelectedGame;
+        var enabledSet = game.EnabledMods.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (enabledSet.Contains(entry.ModId)) enabledSet.Remove(entry.ModId);
+        else enabledSet.Add(entry.ModId);
+
+        var depMap = AllMods.ToDictionary(
+            kv => kv.Key,
+            kv => (IReadOnlyList<string>)kv.Value.Dependencies,
+            StringComparer.OrdinalIgnoreCase);
+
+        var enabledGroup  = game.SortedMods.Where(enabledSet.Contains).ToList();
+        var disabledGroup = game.SortedMods.Where(id => !enabledSet.Contains(id)).ToList();
+        var sortedEnabled  = LoadOrderSorter.Sort(enabledGroup, depMap);
+        var sortedDisabled = LoadOrderSorter.Sort(disabledGroup, depMap);
+        var newSorted  = sortedEnabled.Concat(sortedDisabled).ToList();
+        var newEnabled = sortedEnabled.ToList();
+
+        var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
+        if (!File.Exists(configPath)) return;
+
+        AppConfigWriter.WriteEnabledAndSorted(configPath, game.AppId, newEnabled, newSorted);
+
+        var prevId = game.AppId;
+        LoadFrom(_install);
+        var restored = Games.FirstOrDefault(g => g.AppId == prevId);
+        if (restored is not null) SelectedGame = restored;
     }
 
     private void RebuildEntries()
@@ -78,8 +141,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void ApplyFilter()
     {
         Entries.Clear();
-        foreach (var e in ModFilter.Filter(_allEntries, SearchText)) Entries.Add(e);
+        foreach (var e in ModFilter.Filter(_allEntries, SearchText, FilterMode)) Entries.Add(e);
         SelectedEntry = Entries.Count > 0 ? Entries[0] : null;
+        OnChanged(nameof(EntryCountLabel));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
