@@ -2,3 +2,6 @@ bin/
 obj/
 publish/
 *.user
+
+# scratch (subagent briefs, reports, diff packages, progress ledger)
+.superpowers/
