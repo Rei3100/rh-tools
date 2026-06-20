@@ -1,6 +1,5 @@
 // src/ReloadedHelper.App/MainWindow.xaml.cs
 using System.Windows;
-using H.NotifyIcon; // H.NotifyIcon.Wpf パッケージ — TaskbarIcon は H.NotifyIcon 名前空間
 using ReloadedHelper.Core;
 
 namespace ReloadedHelper.App;
@@ -8,15 +7,12 @@ namespace ReloadedHelper.App;
 public partial class MainWindow : Window
 {
     private readonly ShellViewModel _shell;
-    private readonly TaskbarIcon    _tray;
 
     public MainWindow(ShellViewModel shell)
     {
         _shell     = shell;
         DataContext = shell;
         InitializeComponent();
-
-        _tray = BuildTrayIcon();
     }
 
     // ── サイドナビ ──
@@ -26,6 +22,10 @@ public partial class MainWindow : Window
 
     // ── オーバーレイを閉じる ──
     private void CloseOverlay_Click(object sender, RoutedEventArgs e)
+        => _shell.ShowModList();
+
+    private void Backdrop_MouseDown(object sender,
+        System.Windows.Input.MouseButtonEventArgs e)
         => _shell.ShowModList();
 
     protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
@@ -43,8 +43,8 @@ public partial class MainWindow : Window
     {
         if (WindowState == WindowState.Minimized && _shell.SettingsVm.MinimizeToTray)
         {
-            ShowInTaskbar    = false;
-            _tray.Visibility = Visibility.Visible;
+            ShowInTaskbar       = false;
+            TrayIcon.Visibility = Visibility.Visible;
             Hide();
         }
     }
@@ -52,40 +52,22 @@ public partial class MainWindow : Window
     private void RestoreWindow()
     {
         Show();
-        WindowState   = WindowState.Maximized;
-        ShowInTaskbar = true;
+        WindowState         = WindowState.Maximized;
+        ShowInTaskbar       = true;
         Activate();
-        _tray.Visibility = Visibility.Collapsed;
+        TrayIcon.Visibility = Visibility.Collapsed;
     }
+
+    // ── トレイアイコンイベント ──
+    private void TrayIcon_TrayLeftMouseDown(object sender,
+        RoutedEventArgs e) => RestoreWindow();
+    private void TrayShow_Click(object sender, RoutedEventArgs e) => RestoreWindow();
+    private void TrayExit_Click(object sender, RoutedEventArgs e)
+        => Application.Current.Shutdown();
 
     // ── 終了 ──
     private void Window_Closed(object sender, EventArgs e)
     {
-        _tray.Dispose();
-    }
-
-    // ── トレイアイコン構築 ──
-    private TaskbarIcon BuildTrayIcon()
-    {
-        var icon = new TaskbarIcon
-        {
-            IconSource   = new System.Windows.Media.Imaging.BitmapImage(
-                               new Uri("pack://application:,,,/Assets/app.ico")),
-            ToolTipText  = "Reloaded Helper",
-            Visibility   = Visibility.Collapsed,
-        };
-
-        var menu       = new System.Windows.Controls.ContextMenu();
-        var itemShow   = new System.Windows.Controls.MenuItem { Header = "表示" };
-        var itemExit   = new System.Windows.Controls.MenuItem { Header = "終了" };
-        itemShow.Click += (_, _) => RestoreWindow();
-        itemExit.Click += (_, _) => Application.Current.Shutdown();
-        menu.Items.Add(itemShow);
-        menu.Items.Add(itemExit);
-        icon.ContextMenu = menu;
-
-        icon.TrayLeftMouseDown += (_, _) => RestoreWindow();
-
-        return icon;
+        TrayIcon.Dispose();
     }
 }

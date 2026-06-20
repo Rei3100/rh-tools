@@ -4,6 +4,7 @@
         xmlns:core="clr-namespace:ReloadedHelper.Core;assembly=ReloadedHelper.Core"
         xmlns:app="clr-namespace:ReloadedHelper.App"
         xmlns:views="clr-namespace:ReloadedHelper.App.Views"
+        xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
         Title="Reloaded Helper" Height="700" Width="1100" MinWidth="800" MinHeight="500"
         Background="{DynamicResource BgMainBrush}"
         FontFamily="{DynamicResource MainFont}"
@@ -24,6 +25,20 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <!-- ── システムトレイアイコン（XAML で宣言してトレイに正しく登録） ── -->
+        <tb:TaskbarIcon x:Name="TrayIcon" Grid.ColumnSpan="2"
+                        IconSource="/Assets/app.ico"
+                        ToolTipText="Reloaded Helper"
+                        Visibility="Collapsed"
+                        TrayLeftMouseDown="TrayIcon_TrayLeftMouseDown">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="表示" Click="TrayShow_Click"/>
+                    <MenuItem Header="終了" Click="TrayExit_Click"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+
         <!-- ── サイドナビ ── -->
         <Border Grid.Column="0" Background="{DynamicResource BgBarBrush}">
             <DockPanel LastChildFill="False">
@@ -34,8 +49,8 @@
                                FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
                 </Border>
 
-                <!-- MOD 一覧ボタン -->
-                <Button DockPanel.Dock="Top" Click="NavModList_Click" ToolTip="MOD 一覧">
+                <!-- MOD 一覧ボタン（ToolTip なし） -->
+                <Button DockPanel.Dock="Top" Click="NavModList_Click">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
                             <Style.Triggers>
@@ -48,8 +63,8 @@
                     <TextBlock Text="&#x2261;" FontSize="22" Foreground="{DynamicResource TextBodyBrush}"/>
                 </Button>
 
-                <!-- 設定ボタン -->
-                <Button DockPanel.Dock="Top" Click="NavSettings_Click" ToolTip="設定">
+                <!-- 設定ボタン（ToolTip なし） -->
+                <Button DockPanel.Dock="Top" Click="NavSettings_Click">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
                             <Style.Triggers>
@@ -62,8 +77,8 @@
                     <TextBlock Text="&#x2699;" FontSize="20" Foreground="{DynamicResource TextBodyBrush}"/>
                 </Button>
 
-                <!-- ヘルプボタン（下端） -->
-                <Button DockPanel.Dock="Bottom" Click="NavHelp_Click" ToolTip="ヘルプ">
+                <!-- ヘルプボタン（下端、ToolTip なし） -->
+                <Button DockPanel.Dock="Bottom" Click="NavHelp_Click">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
                             <Style.Triggers>
@@ -80,53 +95,52 @@
             </DockPanel>
         </Border>
 
-        <!-- ── コンテンツエリア ── -->
+        <!-- ── コンテンツエリア（MOD 一覧のみ、オーバーレイは外に移動） ── -->
         <Grid Grid.Column="1">
-
-            <!-- 常に表示される MOD 一覧 -->
             <views:ModListView DataContext="{Binding ModListVm}"/>
+        </Grid>
 
-            <!-- 設定・ヘルプ オーバーレイ -->
-            <Grid Visibility="{Binding IsOverlayVisible,
-                               Converter={StaticResource BoolToVisConverter}}">
+        <!-- ── 設定・ヘルプ オーバーレイ（ColumnSpan="2" でウィンドウ全幅センタリング） ── -->
+        <Grid Grid.ColumnSpan="2"
+              Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVisConverter}}">
 
-                <!-- 半透明バックドロップ -->
-                <Rectangle Fill="Black" Opacity="0.45"/>
+            <!-- 半透明バックドロップ（クリックで閉じる） -->
+            <Rectangle Fill="Black" Opacity="0.45"
+                       MouseLeftButtonDown="Backdrop_MouseDown"/>
 
-                <!-- パネル本体 -->
-                <Border Width="560" MaxHeight="620"
-                        Background="{DynamicResource BgBarBrush}"
-                        BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
-                        CornerRadius="12"
-                        HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+            <!-- パネル本体 -->
+            <Border Width="560" MaxHeight="620"
+                    Background="{DynamicResource BgBarBrush}"
+                    BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                    CornerRadius="12"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                        <!-- 閉じるボタン -->
-                        <Button Grid.Row="0" Content="✕"
-                                Width="32" Height="32"
-                                HorizontalAlignment="Right" Margin="8"
-                                Click="CloseOverlay_Click"
-                                Style="{StaticResource NavButtonStyle}"/>
+                    <!-- 閉じるボタン -->
+                    <Button Grid.Row="0" Content="✕"
+                            Width="32" Height="32"
+                            HorizontalAlignment="Right" Margin="8"
+                            Click="CloseOverlay_Click"
+                            Style="{StaticResource NavButtonStyle}"/>
 
-                        <!-- コンテンツ（設定 or ヘルプ） -->
-                        <ContentControl Grid.Row="1"
-                                        Content="{Binding CurrentOverlayView}">
-                            <ContentControl.Resources>
-                                <DataTemplate DataType="{x:Type core:SettingsViewModel}">
-                                    <views:SettingsView/>
-                                </DataTemplate>
-                                <DataTemplate DataType="{x:Type app:HelpViewModel}">
-                                    <views:HelpView/>
-                                </DataTemplate>
-                            </ContentControl.Resources>
-                        </ContentControl>
-                    </Grid>
-                </Border>
-            </Grid>
+                    <!-- コンテンツ（設定 or ヘルプ） -->
+                    <ContentControl Grid.Row="1"
+                                    Content="{Binding CurrentOverlayView}">
+                        <ContentControl.Resources>
+                            <DataTemplate DataType="{x:Type core:SettingsViewModel}">
+                                <views:SettingsView/>
+                            </DataTemplate>
+                            <DataTemplate DataType="{x:Type app:HelpViewModel}">
+                                <views:HelpView/>
+                            </DataTemplate>
+                        </ContentControl.Resources>
+                    </ContentControl>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </Window>
