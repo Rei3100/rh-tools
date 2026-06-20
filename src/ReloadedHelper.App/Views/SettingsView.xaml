@@ -34,7 +34,7 @@
                          Text="{Binding UiZoomPercent, UpdateSourceTrigger=LostFocus}"
                          HorizontalContentAlignment="Center"
                          VerticalContentAlignment="Center"
-                         Height="32"/>
+                         Height="38"/>
                 <TextBlock Grid.Column="2" Text="%" VerticalAlignment="Center"
                            Foreground="{DynamicResource TextLabelBrush}" Margin="4,0,0,0"/>
             </Grid>
@@ -65,8 +65,8 @@
                          Text="{Binding ReloadedInstallPath, Mode=OneWay}"
                          IsReadOnly="True"
                          FontFamily="Consolas"
-                         Margin="0,0,8,0" Height="32"/>
-                <Button Grid.Column="1" Content="変更..." Padding="12,0" Height="32"
+                         Margin="0,0,8,0" Height="38"/>
+                <Button Grid.Column="1" Content="変更..." Padding="12,0" Height="38"
                         Background="{DynamicResource BgInputBrush}"
                         Foreground="{DynamicResource TextBodyBrush}"
                         BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
