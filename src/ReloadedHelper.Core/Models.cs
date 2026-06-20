@@ -38,3 +38,9 @@ public sealed record GameInfo(
 
     public string DisplayName => string.IsNullOrEmpty(AppName) ? AppId : AppName;
 }
+
+public sealed record ModLoadEntry(int Order, string ModId, ModInfo? Info, bool Enabled)
+{
+    public string DisplayName =>
+        Info is { ModName.Length: > 0 } ? Info.ModName : ModId;
+}
