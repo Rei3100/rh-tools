@@ -18,7 +18,10 @@ public static class ModCatalog
                 var info = ModConfigParser.Parse(File.ReadAllText(cfg), folder);
                 if (!string.IsNullOrEmpty(info.ModId)) result[info.ModId] = info;
             }
-            catch (JsonException) { /* skip malformed mod */ }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                /* skip malformed or unreadable mod */
+            }
         }
         return result;
     }
@@ -34,8 +37,15 @@ public static class GameCatalog
         {
             var cfg = Path.Combine(folder, "AppConfig.json");
             if (!File.Exists(cfg)) continue;
-            try { result.Add(AppConfigParser.Parse(File.ReadAllText(cfg), folder)); }
-            catch (JsonException) { /* skip malformed app */ }
+            try
+            {
+                var info = AppConfigParser.Parse(File.ReadAllText(cfg), folder);
+                if (!string.IsNullOrEmpty(info.AppId)) result.Add(info);
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                /* skip malformed or unreadable app */
+            }
         }
         return result;
     }

@@ -65,4 +65,45 @@ public class CatalogsTests
         }
         finally { Directory.Delete(root, true); }
     }
+
+    [Fact]
+    public void GameCatalog_skips_apps_with_empty_AppId()
+    {
+        var apps = NewTempDir();
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(apps, "Bad"));
+            File.WriteAllText(Path.Combine(apps, "Bad", "AppConfig.json"),
+                """{ "AppId": "", "AppName": "X" }""");
+            Directory.CreateDirectory(Path.Combine(apps, "Good"));
+            File.WriteAllText(Path.Combine(apps, "Good", "AppConfig.json"),
+                """{ "AppId": "ok.exe", "AppName": "OK" }""");
+
+            var games = GameCatalog.LoadAll(apps);
+
+            Assert.Single(games);
+            Assert.Equal("ok.exe", games[0].AppId);
+        }
+        finally { Directory.Delete(apps, true); }
+    }
+
+    [Fact]
+    public void ModCatalog_skips_unreadable_files()
+    {
+        var mods = NewTempDir();
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(mods, "A"));
+            var cfg = Path.Combine(mods, "A", "ModConfig.json");
+            File.WriteAllText(cfg, """{ "ModId": "mod.a", "ModName": "A" }""");
+
+            // Hold an exclusive lock on the file so File.ReadAllText throws IOException.
+            using (var locker = new FileStream(cfg, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                var catalog = ModCatalog.LoadAll(mods);
+                Assert.Empty(catalog);  // locked file is skipped, not crashed
+            }
+        }
+        finally { Directory.Delete(mods, true); }
+    }
 }

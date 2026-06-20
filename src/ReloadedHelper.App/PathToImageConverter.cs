@@ -15,8 +15,12 @@ public sealed class PathToImageConverter : IValueConverter
             var img = new BitmapImage();
             img.BeginInit();
             img.CacheOption = BitmapCacheOption.OnLoad;
-            img.UriSource = new Uri(p);
-            img.EndInit();
+            using (var stream = File.OpenRead(p))
+            {
+                img.StreamSource = stream;
+                img.EndInit();
+            }
+            img.Freeze();
             return img;
         }
         return null;
