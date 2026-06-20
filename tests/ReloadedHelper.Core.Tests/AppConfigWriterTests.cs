@@ -21,7 +21,7 @@ public class AppConfigWriterTests : IDisposable
     }
 
     [Fact]
-    public void WriteOrder_UpdatesEnabledModsPreservingOtherFields()
+    public void WriteOrder_UpdatesSortedModsPreservingOtherFields()
     {
         File.WriteAllText(_tmp, """
             {
@@ -35,14 +35,14 @@ public class AppConfigWriterTests : IDisposable
         AppConfigWriter.WriteOrder(_tmp, "p5r.exe", new[] { "ModC", "ModA", "ModB" });
 
         var result = AppConfigParser.Parse(File.ReadAllText(_tmp), Path.GetTempPath());
-        Assert.Equal(new[] { "ModC", "ModA", "ModB" }, result.EnabledMods);
+        Assert.Equal(new[] { "ModC", "ModA", "ModB" }, result.SortedMods);
         Assert.Equal("P5R", result.AppName); // other fields preserved
     }
 
     [Fact]
     public void WriteOrder_CreatesBackupBeforeWriting()
     {
-        File.WriteAllText(_tmp, """{"AppId":"test","EnabledMods":["A","B"]}""");
+        File.WriteAllText(_tmp, """{"AppId":"test","SortedMods":["A","B"]}""");
         var appId = "writer-backup-test";
 
         AppConfigWriter.WriteOrder(_tmp, appId, new[] { "B", "A" });
@@ -51,6 +51,6 @@ public class AppConfigWriterTests : IDisposable
         Assert.Single(backups);
         // Backup contains original order
         var original = AppConfigParser.Parse(File.ReadAllText(backups[0]), Path.GetTempPath());
-        Assert.Equal(new[] { "A", "B" }, original.EnabledMods);
+        Assert.Equal(new[] { "A", "B" }, original.SortedMods);
     }
 }

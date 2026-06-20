@@ -6,7 +6,7 @@ namespace ReloadedHelper.Core;
 public static class AppConfigWriter
 {
     public static void WriteOrder(
-        string configPath, string appId, IReadOnlyList<string> newEnabledMods)
+        string configPath, string appId, IReadOnlyList<string> newSortedMods)
     {
         LoadOrderBackupService.Backup(configPath, appId);
 
@@ -19,11 +19,11 @@ public static class AppConfigWriter
         writer.WriteStartObject();
         foreach (var prop in doc.RootElement.EnumerateObject())
         {
-            if (prop.Name == "EnabledMods")
+            if (prop.Name == "SortedMods")
             {
-                writer.WritePropertyName("EnabledMods");
+                writer.WritePropertyName("SortedMods");
                 writer.WriteStartArray();
-                foreach (var mod in newEnabledMods) writer.WriteStringValue(mod);
+                foreach (var mod in newSortedMods) writer.WriteStringValue(mod);
                 writer.WriteEndArray();
             }
             else

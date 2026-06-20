@@ -142,13 +142,13 @@ public partial class App : Application
         bool anyChanged = false;
         foreach (var game in mainVm.Games)
         {
-            if (game.EnabledMods.Count == 0) continue;
+            if (game.SortedMods.Count == 0) continue;
 
-            var sorted = LoadOrderSorter.Sort(game.EnabledMods, depMap);
+            var sorted = LoadOrderSorter.Sort(game.SortedMods, depMap);
 
             // Check if order actually changed
             bool changed = !sorted.SequenceEqual(
-                game.EnabledMods, StringComparer.OrdinalIgnoreCase);
+                game.SortedMods, StringComparer.OrdinalIgnoreCase);
             if (!changed) continue;
 
             var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
