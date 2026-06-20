@@ -6,6 +6,10 @@ namespace ReloadedHelper.Core;
 public sealed class AppSettings
 {
     public string? ReloadedInstallPath { get; set; }
+    public int UiZoomPercent { get; set; } = 100;
+    public bool MinimizeToTray { get; set; } = true;
+    public bool RememberLastGame { get; set; } = true;
+    public string? LastGameId { get; set; }
 }
 
 public static class SettingsStore
