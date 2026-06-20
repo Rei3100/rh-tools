@@ -3,6 +3,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:app="clr-namespace:ReloadedHelper.App"
+             xmlns:core="clr-namespace:ReloadedHelper.Core;assembly=ReloadedHelper.Core"
              Background="{DynamicResource BgMainBrush}">
     <UserControl.Resources>
         <app:PathToImageConverter x:Key="Img"/>
@@ -23,7 +24,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- ゲームタブ -->
+                <!-- ゲームタブ（マウスホイールで切り替え） -->
                 <ListBox Grid.Column="0"
                          ItemsSource="{Binding Games}"
                          SelectedItem="{Binding SelectedGame}"
@@ -31,7 +32,8 @@
                          Background="Transparent" BorderThickness="0"
                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
                          ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                         ItemContainerStyle="{DynamicResource GameTabItemStyle}">
+                         ItemContainerStyle="{DynamicResource GameTabItemStyle}"
+                         PreviewMouseWheel="GameTabs_MouseWheel">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel Orientation="Horizontal"/>
@@ -39,7 +41,7 @@
                     </ListBox.ItemsPanel>
                 </ListBox>
 
-                <!-- 検索ボックス（角丸外枠 + 虫眼鏡 + placeholder） -->
+                <!-- 検索ボックス -->
                 <Border Grid.Column="1"
                         Background="{DynamicResource BgInputBrush}"
                         BorderBrush="{DynamicResource BorderInputBrush}"
@@ -110,14 +112,77 @@
 
             <!-- MOD リスト -->
             <DockPanel Grid.Column="0" Margin="12,8,6,8">
-                <!-- 件数ヘッダ -->
-                <TextBlock DockPanel.Dock="Top" Margin="4,0,0,6"
-                           FontSize="{DynamicResource FontSizeLabel}"
-                           Foreground="{DynamicResource TextMetaBrush}">
-                    <Run Text="読み込み順 ・ 全 "/>
-                    <Run Text="{Binding Entries.Count, Mode=OneWay}"/>
-                    <Run Text=" 件"/>
-                </TextBlock>
+
+                <!-- 件数ヘッダ + フィルタボタン -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 件数ラベル -->
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding EntryCountLabel, Mode=OneWay}"
+                               FontSize="{DynamicResource FontSizeLabel}"
+                               Foreground="{DynamicResource TextMetaBrush}"
+                               VerticalAlignment="Center"
+                               Margin="4,0,0,0"/>
+
+                    <!-- フィルタボタン：全て / 有効 / 無効 -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="全て" Click="FilterAll_Click"
+                                Padding="8,4" Margin="0,0,3,0" Cursor="Hand"
+                                Foreground="{DynamicResource TextBodyBrush}"
+                                BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                                FontSize="{DynamicResource FontSizeLabel}">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="{DynamicResource BgInputBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FilterMode}"
+                                                     Value="{x:Static core:FilterMode.All}">
+                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="有効" Click="FilterEnabled_Click"
+                                Padding="8,4" Margin="0,0,3,0" Cursor="Hand"
+                                Foreground="{DynamicResource TextBodyBrush}"
+                                BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                                FontSize="{DynamicResource FontSizeLabel}">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="{DynamicResource BgInputBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FilterMode}"
+                                                     Value="{x:Static core:FilterMode.EnabledOnly}">
+                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="無効" Click="FilterDisabled_Click"
+                                Padding="8,4" Cursor="Hand"
+                                Foreground="{DynamicResource TextBodyBrush}"
+                                BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                                FontSize="{DynamicResource FontSizeLabel}">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="{DynamicResource BgInputBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FilterMode}"
+                                                     Value="{x:Static core:FilterMode.DisabledOnly}">
+                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Grid>
 
                 <ListBox ItemsSource="{Binding Entries}"
                          SelectedItem="{Binding SelectedEntry}"
@@ -177,9 +242,10 @@
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
 
-                                <!-- ON/OFF トグル（表示専用） -->
+                                <!-- ON/OFF トグル（クリックで有効/無効を切り替え） -->
                                 <ToggleButton Grid.Column="3"
                                              IsChecked="{Binding Enabled, Mode=OneWay}"
+                                             Click="ModToggle_Click"
                                              Style="{DynamicResource ToggleSwitchStyle}"
                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Grid>
