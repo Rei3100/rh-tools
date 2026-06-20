@@ -4,7 +4,7 @@
              Background="{DynamicResource BgMainBrush}">
     <!-- DataContext = SettingsViewModel -->
     <ScrollViewer VerticalScrollBarVisibility="Hidden">
-        <StackPanel Margin="32,24" MaxWidth="520" HorizontalAlignment="Left">
+        <StackPanel Margin="32,24" MaxWidth="520" HorizontalAlignment="Stretch">
 
             <!-- タイトル -->
             <TextBlock Text="設定"
