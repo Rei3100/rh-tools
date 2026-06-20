@@ -23,3 +23,18 @@ public sealed record ModInfo(
 
     public string DisplayName => string.IsNullOrEmpty(ModName) ? ModId : ModName;
 }
+
+public sealed record GameInfo(
+    string AppId,
+    string AppName,
+    string AppLocation,
+    string? IconFileName,
+    IReadOnlyList<string> EnabledMods,
+    IReadOnlyList<string> SortedMods,
+    string FolderPath)
+{
+    public string? IconPath =>
+        string.IsNullOrEmpty(IconFileName) ? null : Path.Combine(FolderPath, IconFileName);
+
+    public string DisplayName => string.IsNullOrEmpty(AppName) ? AppId : AppName;
+}
