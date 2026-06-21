@@ -9,6 +9,12 @@ public sealed class ModUserData
     public string? TranslatedDescription { get; set; }
     public string? UrlOverride { get; set; }
     public string? Notes { get; set; }
+
+    // Phase 4 追加
+    public string? GameBananaId { get; set; }
+    public string? Category { get; set; }
+    public DateTime? FetchedAt { get; set; }
+    public string? FetchedVersion { get; set; }
 }
 
 public sealed class UserDataFile
