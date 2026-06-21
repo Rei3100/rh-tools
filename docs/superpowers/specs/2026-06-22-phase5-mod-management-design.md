@@ -21,6 +21,8 @@ Phase 4 の残バグを修正し、MOD管理機能を大幅強化する。
 | D | 個別・複数選択更新 | Ctrl+クリックで複数選択し「選択中を更新」ボタンで一括更新 |
 | E | 強制再取得 | バージョン不問で全MODを常に再取得・上書き |
 
+| F | タスクトレイメニュー配色修正 | 右クリックメニューのテキストが読みづらい問題を修正 |
+
 **スコープ外（Phase 6 以降）**: MODコンフィグ設定UI / Reloaded-IIログ解析・クラッシュ対策
 
 ---
@@ -148,9 +150,9 @@ public void ToggleEnabled(ModLoadEntry entry)
 
 ### C. 個別編集・削除ダイアログ
 
-#### 開き方
+#### 開き方（2通り）
 
-各 MOD カードの右端に「…」ボタン（6列目）を追加：
+**①「…」ボタン（6列目）**：各 MOD カードの右端に追加
 
 ```xml
 <ColumnDefinition Width="36"/>  <!-- … ボタン -->
@@ -160,6 +162,24 @@ public void ToggleEnabled(ModLoadEntry entry)
         Width="28" Height="28" Padding="0"
         Style="{DynamicResource IconButtonStyle}"/>
 ```
+
+**②右クリック ContextMenu**：DataTemplate に ContextMenu を追加
+
+```xml
+<Grid Height="54">
+    <Grid.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="編集..."   Click="EditMenu_Click"/>
+            <MenuItem Header="更新"      Click="RefreshMenu_Click"/>
+            <Separator/>
+            <MenuItem Header="削除（ゴミ箱へ）" Click="DeleteMenu_Click"/>
+        </ContextMenu>
+    </Grid.ContextMenu>
+    ...
+</Grid>
+```
+
+右クリックメニューの各項目は「…」ボタンと同じロジックを呼ぶ。`Separator` はゴミ箱削除の誤操作防止のために区切る。
 
 #### `ModEditWindow.xaml` の構成
 
@@ -317,6 +337,36 @@ var toProcess = targetModIds is null
 
 ---
 
+### F. タスクトレイ右クリックメニュー配色修正
+
+#### 問題
+
+`H.NotifyIcon.Wpf` の `TaskbarIcon.ContextMenu` は WPF の `ContextMenu` コントロールを使用している。アプリがダークテーマを定義しているため、Windows ライトモード時に ContextMenu の背景色と文字色が低コントラストになり読みづらい。
+
+#### 修正
+
+`MainWindow.xaml` のトレイアイコン ContextMenu に明示的なスタイルを設定する：
+
+```xml
+<tb:TaskbarIcon.ContextMenu>
+    <ContextMenu Background="{DynamicResource BgBarBrush}"
+                 BorderBrush="{DynamicResource BorderInputBrush}"
+                 BorderThickness="1">
+        <MenuItem Header="表示" Click="TrayShow_Click"
+                  Foreground="{DynamicResource TextBodyBrush}"
+                  Background="{DynamicResource BgBarBrush}"/>
+        <Separator Background="{DynamicResource BgSeparatorBrush}"/>
+        <MenuItem Header="終了" Click="TrayExit_Click"
+                  Foreground="{DynamicResource TextBodyBrush}"
+                  Background="{DynamicResource BgBarBrush}"/>
+    </ContextMenu>
+</tb:TaskbarIcon.ContextMenu>
+```
+
+`DynamicResource` を使うことでアプリのカラーテーマ（ダーク固定）と一致させ、Windows のライト/ダークモードに関わらず常にアプリの配色で表示される。`Separator` も追加して「表示」と「終了」を区切る。
+
+---
+
 ## データフロー
 
 ### 起動時
@@ -382,8 +432,9 @@ ModListView.RefreshSelected_Click()
 - `src/ReloadedHelper.Core/MainViewModel.cs`
 - `src/ReloadedHelper.Core/AppConfigWriter.cs`
 - `src/ReloadedHelper.App/App.xaml.cs`
-- `src/ReloadedHelper.App/Views/ModListView.xaml`
+- `src/ReloadedHelper.App/Views/ModListView.xaml`（右クリックContextMenu追加含む）
 - `src/ReloadedHelper.App/Views/ModListView.xaml.cs`
+- `src/ReloadedHelper.App/MainWindow.xaml`（トレイContextMenuスタイル修正）
 
 ### 新規ファイル
 
