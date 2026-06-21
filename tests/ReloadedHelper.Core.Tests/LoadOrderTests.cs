@@ -45,4 +45,39 @@ public class LoadOrderTests
         Assert.Single(ModFilter.Filter(entries, "alph"));
         Assert.Equal(3, ModFilter.Filter(entries, "  ").Count);
     }
+
+    [Fact]
+    public void Build_injects_category_from_userdata()
+    {
+        var catalog = new Dictionary<string, ModInfo>
+        {
+            ["a"] = Mod("a", "Alpha"),
+        };
+        var game = new GameInfo("p5r.exe", "P5R", "", null,
+            EnabledMods: new[] { "a" },
+            SortedMods:  new[] { "a" },
+            FolderPath: @"C:\Apps\p5r.exe");
+        var userData = new UserDataFile();
+        userData.Mods["a"] = new ModUserData { Category = "Sound" };
+
+        var entries = LoadOrderBuilder.Build(game, catalog, userData);
+
+        Assert.Equal("Sound", entries[0].Category);
+        Assert.Equal("サウンド", entries[0].CategoryLabel);
+    }
+
+    [Fact]
+    public void Build_without_userdata_leaves_category_null()
+    {
+        var catalog = new Dictionary<string, ModInfo> { ["a"] = Mod("a", "Alpha") };
+        var game = new GameInfo("p5r.exe", "P5R", "", null,
+            EnabledMods: new[] { "a" },
+            SortedMods:  new[] { "a" },
+            FolderPath: @"C:\Apps\p5r.exe");
+
+        var entries = LoadOrderBuilder.Build(game, catalog);
+
+        Assert.Null(entries[0].Category);
+        Assert.Null(entries[0].CategoryLabel);
+    }
 }

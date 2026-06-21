@@ -4,7 +4,10 @@ public enum FilterMode { All, EnabledOnly, DisabledOnly }
 
 public static class LoadOrderBuilder
 {
-    public static IReadOnlyList<ModLoadEntry> Build(GameInfo game, IReadOnlyDictionary<string, ModInfo> catalog)
+    public static IReadOnlyList<ModLoadEntry> Build(
+        GameInfo game,
+        IReadOnlyDictionary<string, ModInfo> catalog,
+        UserDataFile? userData = null)
     {
         var enabled = new HashSet<string>(game.EnabledMods, StringComparer.Ordinal);
         var list = new List<ModLoadEntry>(game.SortedMods.Count);
@@ -12,7 +15,8 @@ public static class LoadOrderBuilder
         {
             var id = game.SortedMods[i];
             catalog.TryGetValue(id, out var info);
-            list.Add(new ModLoadEntry(i + 1, id, info, enabled.Contains(id)));
+            var category = userData?.Mods.GetValueOrDefault(id)?.Category;
+            list.Add(new ModLoadEntry(i + 1, id, info, enabled.Contains(id), category));
         }
         return list;
     }

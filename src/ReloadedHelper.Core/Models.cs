@@ -39,8 +39,21 @@ public sealed record GameInfo(
     public string DisplayName => string.IsNullOrEmpty(AppName) ? AppId : AppName;
 }
 
-public sealed record ModLoadEntry(int Order, string ModId, ModInfo? Info, bool Enabled)
+public sealed record ModLoadEntry(int Order, string ModId, ModInfo? Info, bool Enabled, string? Category = null)
 {
     public string DisplayName =>
         Info is { ModName.Length: > 0 } ? Info.ModName : ModId;
+
+    public string? CategoryLabel => Category switch
+    {
+        "Sound"              => "サウンド",
+        "Skin"               => "スキン",
+        "Texture"            => "テクスチャ",
+        "UI"                 => "UI",
+        "Gameplay Mechanics" => "ゲームプレイ",
+        "Misc"               => "その他",
+        "Quality Of Life"    => "QOL",
+        null                 => null,
+        _                    => Category,
+    };
 }
