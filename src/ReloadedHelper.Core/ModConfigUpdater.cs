@@ -26,15 +26,27 @@ public static class ModConfigUpdater
             using (var writer = new Utf8JsonWriter(ms, WriterOptions))
             {
                 writer.WriteStartObject();
+                bool wroteModName = false, wroteModDescription = false;
                 foreach (var prop in doc.RootElement.EnumerateObject())
                 {
                     if (prop.Name == "ModName")
+                    {
                         writer.WriteString("ModName", japaneseName);
+                        wroteModName = true;
+                    }
                     else if (prop.Name == "ModDescription")
+                    {
                         writer.WriteString("ModDescription", japaneseDescription);
+                        wroteModDescription = true;
+                    }
                     else
+                    {
                         prop.WriteTo(writer);
+                    }
                 }
+                // フィールドが元々なければ末尾に追加
+                if (!wroteModName) writer.WriteString("ModName", japaneseName);
+                if (!wroteModDescription) writer.WriteString("ModDescription", japaneseDescription);
                 writer.WriteEndObject();
             }
 

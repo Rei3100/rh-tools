@@ -135,6 +135,16 @@ public partial class App : Application
 
     private static async Task RefreshModMetadataAsync(MainViewModel modListVm, ReloadedInstall install)
     {
+        // C-1/C-2: 二重実行防止 — Dispatcher 上でアトミックにフラグを確認・セット
+        bool started = false;
+        Current.Dispatcher.Invoke(() =>
+        {
+            if (modListVm.IsUpdating) return;
+            modListVm.IsUpdating = true;
+            started = true;
+        });
+        if (!started) return;  // 既に実行中なら即座に返る
+
         try
         {
             using var http = new System.Net.Http.HttpClient();
@@ -143,13 +153,17 @@ public partial class App : Application
             var translator = new TranslationService(http);
 
             var userData = UserDataStore.Load(UserDataStore.DefaultPath);
-            var catalog = modListVm.AllMods;
 
-            // 未処理 or バージョンが変わった MOD を列挙
+            // I-2: バックグラウンドスレッドから AllMods を安全に取得（スナップショット）
+            var catalog = Current.Dispatcher.Invoke(() => modListVm.AllMods);
+
+            // I-1: 未処理 or バージョンが変わった MOD を列挙（バージョンなし MOD は初回のみ）
             var toProcess = catalog.Values
                 .Where(mod =>
                 {
                     if (!userData.Mods.TryGetValue(mod.ModId, out var ud)) return true;
+                    // バージョンなしの MOD は初回のみ処理（毎回再処理しない）
+                    if (string.IsNullOrEmpty(mod.ModVersion)) return ud.FetchedAt is null;
                     return ud.FetchedVersion != mod.ModVersion;
                 })
                 .ToList();
@@ -170,7 +184,6 @@ public partial class App : Application
                 }
             }
 
-            Current.Dispatcher.Invoke(() => modListVm.IsUpdating = true);
             int processed = 0;
 
             foreach (var mod in toProcess)
@@ -243,14 +256,18 @@ public partial class App : Application
 
             UserDataStore.Save(UserDataStore.DefaultPath, userData);
 
+            Current.Dispatcher.Invoke(() => modListVm.LoadFrom(install));
+        }
+        catch { /* 更新失敗は無視して起動を継続 */ }
+        finally
+        {
+            // C-2: 例外発生時も含め確実にフラグをリセット
             Current.Dispatcher.Invoke(() =>
             {
                 modListVm.IsUpdating     = false;
                 modListVm.UpdateProgress = "";
-                modListVm.LoadFrom(install);
             });
         }
-        catch { /* 更新失敗は無視して起動を継続 */ }
     }
 
     private static void ApplySortAllGames(MainViewModel mainVm, ReloadedInstall install)

@@ -58,6 +58,26 @@ public class ModConfigUpdaterTests
     }
 
     [Fact]
+    public void Write_adds_missing_fields_when_not_present()
+    {
+        var dir = NewTempDir();
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, "ModConfig.json"),
+                """{"ModId":"x"}""");
+
+            ModConfigUpdater.Write(dir, "日本語名前", "説明文");
+
+            var written = File.ReadAllText(Path.Combine(dir, "ModConfig.json"));
+            using var doc = JsonDocument.Parse(written);
+            Assert.Equal("日本語名前", doc.RootElement.GetProperty("ModName").GetString());
+            Assert.Equal("説明文",    doc.RootElement.GetProperty("ModDescription").GetString());
+            Assert.Equal("x",        doc.RootElement.GetProperty("ModId").GetString());
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
     public void Write_preserves_japanese_unicode_without_escaping()
     {
         var dir = NewTempDir();
