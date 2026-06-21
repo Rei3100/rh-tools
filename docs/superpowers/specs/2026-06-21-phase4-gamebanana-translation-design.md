@@ -151,8 +151,8 @@ AppId をキーに用語マップを保持。GameBanana から取得した name 
 |------|--------|
 | Phantom Thieves | 怪盗団 |
 | Joker | ジョーカー |
-| Metaverse | メタバース |
-| Velvet Room | ベルベット・ルーム |
+| Metaverse | 異世界 |
+| Velvet Room | ベルベットルーム |
 | Palace | パレス |
 | Mementos | メメントス |
 | Persona | ペルソナ |
@@ -165,7 +165,7 @@ AppId をキーに用語マップを保持。GameBanana から取得した name 
 | Ann Takamaki | 高巻杏 |
 | Yusuke | 祐介 |
 | Yusuke Kitagawa | 喜多川祐介 |
-| Makoto | 真希 |
+| Makoto | 真 |
 | Makoto Niijima | 新島真 |
 | Futaba | 双葉 |
 | Futaba Sakura | 佐倉双葉 |
@@ -174,26 +174,25 @@ AppId をキーに用語マップを保持。GameBanana から取得した name 
 | Morgana | モルガナ |
 | Akechi | 明智 |
 | Goro Akechi | 明智吾郎 |
-| Lavenza | ラヴェンザ |
+| Lavenza | ラヴェンツァ |
 | Igor | イゴール |
-| Sojiro | 双葉の父 |
-| Kasumi | 霞 |
+| Sojiro | 惣治郎 |
+| Kasumi | かすみ |
 
 ### P4G 用語（例）
 
 | 英語 | 日本語 |
 |------|--------|
-| Investigation Team | 捜査隊 |
+| Investigation Team | 自称特別捜査隊 |
 | Yu Narukami | 鳴上悠 |
 | Yosuke | 陽介 |
 | Chie | 千枝 |
-| Yukiko | 幸子 |
+| Yukiko | 雪子 |
 | Kanji | 完二 |
-| Rise | 里奈 |
+| Rise | りせ |
 | Teddie | クマ |
 | Naoto | 直斗 |
-| Midnight Channel | 深夜テレビ |
-| Shadow World | シャドウ |
+| Midnight Channel | マヨナカテレビ |
 
 ### P5S 用語（例）
 
