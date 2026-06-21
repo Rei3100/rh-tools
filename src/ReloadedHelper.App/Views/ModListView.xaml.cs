@@ -54,6 +54,12 @@ public partial class ModListView : UserControl
         if (DataContext is MainViewModel vm) vm.FilterMode = FilterMode.DisabledOnly;
     }
 
+    private async void RefreshButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm && !vm.IsUpdating && vm.RefreshAction is { } action)
+            await action();
+    }
+
     // URL ハイパーリンク（既存の動作を維持）
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
     {

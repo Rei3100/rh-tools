@@ -120,13 +120,43 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- 件数ラベル -->
+                    <!-- 件数ラベル（通常時） -->
                     <TextBlock Grid.Column="0"
                                Text="{Binding EntryCountLabel, Mode=OneWay}"
                                FontSize="{DynamicResource FontSizeLabel}"
                                Foreground="{DynamicResource TextMetaBrush}"
                                VerticalAlignment="Center"
-                               Margin="4,0,0,0"/>
+                               Margin="4,0,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsUpdating}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- 更新プログレスラベル（更新中のみ表示） -->
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding UpdateProgress, Mode=OneWay}"
+                               FontSize="{DynamicResource FontSizeLabel}"
+                               Foreground="{DynamicResource AccentBrush}"
+                               VerticalAlignment="Center"
+                               Margin="4,0,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsUpdating}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
 
                     <!-- フィルタボタン：全て / 有効 / 無効 -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -181,6 +211,12 @@
                                 </Style>
                             </Button.Style>
                         </Button>
+                        <Button Content="今すぐ更新" Click="RefreshButton_Click"
+                                Padding="8,4" Margin="6,0,0,0" Cursor="Hand"
+                                Background="{DynamicResource BgInputBrush}"
+                                Foreground="{DynamicResource TextBodyBrush}"
+                                BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                                FontSize="{DynamicResource FontSizeLabel}"/>
                     </StackPanel>
                 </Grid>
 
@@ -196,10 +232,11 @@
                         <DataTemplate>
                             <Grid Height="54">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="36"/>
-                                    <ColumnDefinition Width="50"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="52"/>
+                                    <ColumnDefinition Width="36"/>   <!-- 順番 -->
+                                    <ColumnDefinition Width="50"/>   <!-- サムネ -->
+                                    <ColumnDefinition Width="*"/>    <!-- 名前 + 作者 -->
+                                    <ColumnDefinition Width="Auto"/> <!-- カテゴリバッジ -->
+                                    <ColumnDefinition Width="52"/>   <!-- トグル -->
                                 </Grid.ColumnDefinitions>
 
                                 <!-- 順番 -->
@@ -242,8 +279,27 @@
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
 
+                                <!-- カテゴリバッジ（CategoryLabel が null のとき非表示） -->
+                                <Border Grid.Column="3" CornerRadius="4" Padding="5,2" Margin="4,0"
+                                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Background="{DynamicResource AccentBrush}" Opacity="0.7">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CategoryLabel}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding CategoryLabel}"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               Foreground="White"/>
+                                </Border>
+
                                 <!-- ON/OFF トグル（クリックで有効/無効を切り替え） -->
-                                <ToggleButton Grid.Column="3"
+                                <ToggleButton Grid.Column="4"
                                              IsChecked="{Binding Enabled, Mode=OneWay}"
                                              Click="ModToggle_Click"
                                              Style="{DynamicResource ToggleSwitchStyle}"
@@ -304,6 +360,25 @@
                             <TextBlock Text="バージョン: " FontSize="{DynamicResource FontSizeDetailBody}"
                                        Foreground="{DynamicResource TextLabelBrush}"/>
                             <TextBlock Text="{Binding Info.ModVersion}"
+                                       FontSize="{DynamicResource FontSizeDetailBody}"
+                                       Foreground="{DynamicResource TextDetailBrush}"/>
+                        </StackPanel>
+
+                        <!-- カテゴリ（null のとき非表示） -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CategoryLabel}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="カテゴリ: " FontSize="{DynamicResource FontSizeDetailBody}"
+                                       Foreground="{DynamicResource TextLabelBrush}"/>
+                            <TextBlock Text="{Binding CategoryLabel}"
                                        FontSize="{DynamicResource FontSizeDetailBody}"
                                        Foreground="{DynamicResource TextDetailBrush}"/>
                         </StackPanel>
