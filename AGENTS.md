@@ -16,6 +16,12 @@ dotnet publish src/ReloadedHelper.App -r win-x64 -c Release /p:PublishSingleFile
 - テスト用 xUnit は可
 - ユーザーデータは %APPDATA%\ReloadedHelper 以外の場所に保存禁止
 
+## 構成
+
+- src/ReloadedHelper.Core/         — ロジック層（WPF なし）
+- src/ReloadedHelper.App/          — WPF UI 層
+- tests/ReloadedHelper.Core.Tests/ — xUnit テスト
+
 ## アーキテクチャの決定記録
 
 重要な設計決定は docs/adr/ を参照すること：

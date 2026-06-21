@@ -20,7 +20,7 @@ if ($cmd -match "--no-verify") {
 
 # ビルドチェック
 Write-Host "コミット前ビルドチェック中..."
-$buildOutput = dotnet build "reloaded-helper.slnx" --no-restore 2>&1
+$buildOutput = dotnet build "reloaded-helper.slnx" 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Error "ビルドエラーが検出されました。コミットをブロックします。`n$($buildOutput | Out-String)"
     exit 2
