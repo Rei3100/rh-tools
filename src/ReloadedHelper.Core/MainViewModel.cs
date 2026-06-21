@@ -9,8 +9,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private IReadOnlyDictionary<string, ModInfo> _catalog = new Dictionary<string, ModInfo>();
     private IReadOnlyList<ModLoadEntry> _allEntries = Array.Empty<ModLoadEntry>();
     private ReloadedInstall? _install;
+    private UserDataFile _userData = new();
 
     public IReadOnlyDictionary<string, ModInfo> AllMods => _catalog;
+
+    private bool _isUpdating;
+    public bool IsUpdating
+    {
+        get => _isUpdating;
+        set { if (_isUpdating != value) { _isUpdating = value; OnChanged(); } }
+    }
+
+    private string _updateProgress = "";
+    public string UpdateProgress
+    {
+        get => _updateProgress;
+        set { if (_updateProgress != value) { _updateProgress = value; OnChanged(); } }
+    }
+
+    public Func<Task>? RefreshAction { get; set; }
 
     public ObservableCollection<GameInfo> Games  { get; } = new();
     public ObservableCollection<ModLoadEntry> Entries { get; } = new();
@@ -91,6 +108,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         _install = install;
         _catalog = ModCatalog.LoadAll(install.ModsDir);
+        _userData = UserDataStore.Load(UserDataStore.DefaultPath);
         Games.Clear();
         foreach (var g in GameCatalog.LoadAll(install.AppsDir)) Games.Add(g);
         SelectedGame = Games.Count > 0 ? Games[0] : null;
@@ -134,7 +152,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         _allEntries = SelectedGame is null
             ? Array.Empty<ModLoadEntry>()
-            : LoadOrderBuilder.Build(SelectedGame, _catalog);
+            : LoadOrderBuilder.Build(SelectedGame, _catalog, _userData);
         ApplyFilter();
     }
 

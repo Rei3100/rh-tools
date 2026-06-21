@@ -49,4 +49,29 @@ public class MainViewModelTests
         }
         finally { Directory.Delete(install.RootPath, true); }
     }
+
+    [Fact]
+    public void IsUpdating_fires_PropertyChanged()
+    {
+        var vm = new MainViewModel();
+        var changed = new List<string>();
+        vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? "");
+
+        vm.IsUpdating = true;
+
+        Assert.Contains("IsUpdating", changed);
+    }
+
+    [Fact]
+    public void UpdateProgress_fires_PropertyChanged()
+    {
+        var vm = new MainViewModel();
+        var changed = new List<string>();
+        vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? "");
+
+        vm.UpdateProgress = "更新中 1/10 件...";
+
+        Assert.Contains("UpdateProgress", changed);
+        Assert.Equal("更新中 1/10 件...", vm.UpdateProgress);
+    }
 }
