@@ -70,3 +70,10 @@ SectionB Task B3: complete (commits 8596e52..8d697d0, review clean)
 SectionB Task B4: complete (commits 8d697d0..612388a, review approved — Minor: CaptionCloseButtonStyle hover fg/bg split across Style.Triggers+ControlTemplate.Triggers (works, readability); redundant ButtonState guard)
 SectionB Task B5: complete (commits 612388a..9aadcc1, review clean)
 SectionB caption fix: complete (c2f17fd — caption glyphs use explicit TextBlock w/ local Segoe MDL2 to beat implicit TextBlock style). Final review READY TO MERGE. Visual verification passed (dark titlebar+glyphs, dark context menu, ThemedDialog).
+SectionC Task C1: complete (commits 7bc82f3..9da8632, review clean)
+SectionC Task C2: complete (commits 9da8632..7844994, review clean)
+SectionC Task C3: complete (commits 7844994..66e5d2e, review clean — Minor: camel regex [a-z] vs spec [a-z0-9] (no impact on real keys); Regex not cached)
+SectionC Task C4: complete (commits 66e5d2e..3248fc1, review clean)
+SectionC Task C5: complete (commits 3248fc1..d6b39bc, review approved — Important(plan-mandated, no real impact): ToList().FindIndex O(n^2) per label; Minor: ud snapshot stale risk, new HttpClient per call)
+SectionC Task C6: complete (commits d6b39bc..fdf58f3, review clean)
+SectionC Final review: READY TO MERGE (no Critical/Important). Visual verification passed (右クリック設定...→黒髪双葉の6 bool トグル, 日本語ラベル, ダークUI). Deferred Minors: C3 regex, C5 FindIndex/race, number-field non-numeric coerces to 0.
