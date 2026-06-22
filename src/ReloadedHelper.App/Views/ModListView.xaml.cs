@@ -122,6 +122,20 @@ public partial class ModListView : UserControl
         if (GetContextMenuEntry(sender) is { } entry) OpenEditWindow(entry);
     }
 
+    private void ConfigMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (GetContextMenuEntry(sender) is not { } entry) return;
+        if (DataContext is not MainViewModel vm || vm.Install is not { } install) return;
+        if (!ModConfigStore.Exists(install, entry.ModId))
+        {
+            ThemedDialog.Show(Window.GetWindow(this), "MOD 設定",
+                "このMODには編集できる設定（Config.json）がありません。");
+            return;
+        }
+        var win = new ModConfigWindow(entry.ModId, entry.DisplayName, install) { Owner = Window.GetWindow(this) };
+        win.ShowDialog();
+    }
+
     private async void RefreshMenu_Click(object sender, RoutedEventArgs e)
     {
         if (GetContextMenuEntry(sender) is not { } entry) return;

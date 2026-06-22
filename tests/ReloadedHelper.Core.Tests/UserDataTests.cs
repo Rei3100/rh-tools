@@ -71,4 +71,22 @@ public class UserDataTests
         }
         finally { if (File.Exists(path)) File.Delete(path); }
     }
+
+    [Fact]
+    public void Roundtrip_preserves_config_labels()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"ud-{Guid.NewGuid():N}.json");
+        try
+        {
+            var file = new UserDataFile();
+            file.Mods["m1"] = new ModUserData
+            {
+                ConfigLabels = new Dictionary<string, string> { ["DisableVictoryBgm"] = "勝利BGMを無効化" }
+            };
+            UserDataStore.Save(path, file);
+            var loaded = UserDataStore.Load(path);
+            Assert.Equal("勝利BGMを無効化", loaded.Mods["m1"].ConfigLabels!["DisableVictoryBgm"]);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
 }

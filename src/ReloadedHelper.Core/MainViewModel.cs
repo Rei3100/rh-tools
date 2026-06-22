@@ -12,6 +12,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private UserDataFile _userData = new();
 
     public IReadOnlyDictionary<string, ModInfo> AllMods => _catalog;
+    public ReloadedInstall? Install => _install;
 
     private bool _isUpdating;
     public bool IsUpdating

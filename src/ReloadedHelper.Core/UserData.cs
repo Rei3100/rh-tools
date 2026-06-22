@@ -20,6 +20,9 @@ public sealed class ModUserData
     public string? OriginalName { get; set; }
     public string? OriginalDescription { get; set; }
     public string? Author { get; set; }
+
+    // セクションC 追加
+    public Dictionary<string, string>? ConfigLabels { get; set; }
 }
 
 public sealed class UserDataFile

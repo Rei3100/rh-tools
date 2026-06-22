@@ -58,6 +58,11 @@
 
         <!-- ボタン行 -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
+            <Button x:Name="BtnConfig" Content="設定" Click="BtnConfig_Click"
+                    Padding="12,6" Margin="0,0,8,0"
+                    Background="{DynamicResource BgInputBrush}"
+                    Foreground="{DynamicResource TextBodyBrush}"
+                    BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1" Cursor="Hand"/>
             <Button x:Name="BtnRefresh" Content="個別更新"
                     Click="BtnRefresh_Click" Padding="12,6" Margin="0,0,8,0"
                     Background="{DynamicResource BgInputBrush}"
