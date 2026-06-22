@@ -191,6 +191,13 @@ public partial class ModListView : UserControl
         win.ShowDialog();
     }
 
+    private void DiagnoseButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm || vm.SelectedGame is not { } game) return;
+        var win = new DiagnosticsWindow(game, vm.AllMods) { Owner = Window.GetWindow(this) };
+        win.ShowDialog();
+    }
+
     private static ModLoadEntry? GetContextMenuEntry(object sender)
     {
         if (sender is MenuItem item &&

@@ -77,3 +77,9 @@ SectionC Task C4: complete (commits 66e5d2e..3248fc1, review clean)
 SectionC Task C5: complete (commits 3248fc1..d6b39bc, review approved — Important(plan-mandated, no real impact): ToList().FindIndex O(n^2) per label; Minor: ud snapshot stale risk, new HttpClient per call)
 SectionC Task C6: complete (commits d6b39bc..fdf58f3, review clean)
 SectionC Final review: READY TO MERGE (no Critical/Important). Visual verification passed (右クリック設定...→黒髪双葉の6 bool トグル, 日本語ラベル, ダークUI). Deferred Minors: C3 regex, C5 FindIndex/race, number-field non-numeric coerces to 0.
+SectionDE Task D1: complete (commits d57eee7..24e3b9c, review clean)
+SectionDE Task D2: complete (commits 24e3b9c..bccf1fd, review clean — Minor: no dedup/empty-input test)
+SectionDE Task D3: complete (commits bccf1fd..97afd76, review clean — Minor: dep ContainsKey case-sensitivity asymmetry, no real impact)
+SectionDE Task D4: complete (commits 97afd76..937f002, review clean)
+SectionDE Task D5: complete (commits 937f002..be733e3, review approved — Minor: StatusText z-order under transparent ItemsControl (brief-mandated, harmless))
+SectionDE Final review: READY TO MERGE. Real-data smoke verified engine (P5R: 145 conflicts, fast 79ms). Found+fixed false-positive: library deps flagged disabled (040cb52, review approved — warnings 56->1, info 25 useful). NOTE: DiagnosticsWindow UI not visually confirmed (click likely missed button margin); engine proven, window code correct/unverified-visually.
