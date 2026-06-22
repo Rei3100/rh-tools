@@ -32,16 +32,10 @@
                         Visibility="Collapsed"
                         TrayLeftMouseDown="TrayIcon_TrayLeftMouseDown">
             <tb:TaskbarIcon.ContextMenu>
-                <ContextMenu Background="{DynamicResource BgBarBrush}"
-                             BorderBrush="{DynamicResource BorderInputBrush}"
-                             BorderThickness="1">
-                    <MenuItem Header="表示" Click="TrayShow_Click"
-                              Foreground="{DynamicResource TextBodyBrush}"
-                              Background="{DynamicResource BgBarBrush}"/>
-                    <Separator Background="{DynamicResource BgSeparatorBrush}"/>
-                    <MenuItem Header="終了" Click="TrayExit_Click"
-                              Foreground="{DynamicResource TextBodyBrush}"
-                              Background="{DynamicResource BgBarBrush}"/>
+                <ContextMenu>
+                    <MenuItem Header="表示" Click="TrayShow_Click"/>
+                    <Separator/>
+                    <MenuItem Header="終了" Click="TrayExit_Click"/>
                 </ContextMenu>
             </tb:TaskbarIcon.ContextMenu>
         </tb:TaskbarIcon>
