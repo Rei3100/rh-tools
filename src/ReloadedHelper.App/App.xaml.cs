@@ -49,7 +49,7 @@ public partial class App : Application
         base.OnStartup(e);
 
         var settingsPath = SettingsStore.DefaultPath;
-        var settingsVm   = new SettingsViewModel(settingsPath);
+        var settingsVm = new SettingsViewModel(settingsPath);
 
         var install = ResolveInstall(settingsVm);
         if (install is null) { Shutdown(); return; }
@@ -80,6 +80,8 @@ public partial class App : Application
         window.Show();
         _ = Task.Run(CheckAndApplyUpdateAsync); // バックグラウンドで更新確認
         modListVm.RefreshAction = () => RefreshModMetadataAsync(modListVm, install);
+        modListVm.RefreshSelectedAction = ids =>
+            Task.Run(() => RefreshModMetadataAsync(modListVm, install, ids));
         _ = Task.Run(() => RefreshModMetadataAsync(modListVm, install));
     }
 
@@ -133,7 +135,10 @@ public partial class App : Application
         catch { /* 更新失敗は無視して起動を続ける */ }
     }
 
-    private static async Task RefreshModMetadataAsync(MainViewModel modListVm, ReloadedInstall install)
+    private static async Task RefreshModMetadataAsync(
+        MainViewModel modListVm,
+        ReloadedInstall install,
+        IReadOnlyList<string>? targetModIds = null)
     {
         // C-1/C-2: 二重実行防止 — Dispatcher 上でアトミックにフラグを確認・セット
         bool started = false;
@@ -157,16 +162,12 @@ public partial class App : Application
             // I-2: バックグラウンドスレッドから AllMods を安全に取得（スナップショット）
             var catalog = Current.Dispatcher.Invoke(() => modListVm.AllMods);
 
-            // I-1: 未処理 or バージョンが変わった MOD を列挙（バージョンなし MOD は初回のみ）
-            var toProcess = catalog.Values
-                .Where(mod =>
-                {
-                    if (!userData.Mods.TryGetValue(mod.ModId, out var ud)) return true;
-                    // バージョンなしの MOD は初回のみ処理（毎回再処理しない）
-                    if (string.IsNullOrEmpty(mod.ModVersion)) return ud.FetchedAt is null;
-                    return ud.FetchedVersion != mod.ModVersion;
-                })
-                .ToList();
+            // targetModIds が null なら全件、指定があればその MOD のみ
+            var toProcess = targetModIds is null
+                ? catalog.Values.ToList()
+                : catalog.Values
+                    .Where(m => targetModIds.Contains(m.ModId, StringComparer.OrdinalIgnoreCase))
+                    .ToList();
 
             int total = toProcess.Count;
             if (total == 0) return;
@@ -209,8 +210,8 @@ public partial class App : Application
                     }
                 }
 
-                string jaName  = mod.ModName;
-                string jaDesc  = mod.ModDescription;
+                string jaName = mod.ModName;
+                string jaDesc = mod.ModDescription;
                 string? category = null;
 
                 if (gbId is not null)
@@ -222,8 +223,8 @@ public partial class App : Application
                         foreach (var appId in mod.SupportedAppIds)
                             gameIdCache.TryAdd(appId, gbInfo.GameId);
 
-                        jaName  = await translator.TranslateAsync(gbInfo.Name, "ja");
-                        jaDesc  = await translator.TranslateAsync(gbInfo.Text, "ja");
+                        jaName = await translator.TranslateAsync(gbInfo.Name, "ja");
+                        jaDesc = await translator.TranslateAsync(gbInfo.Text, "ja");
                         category = gbInfo.Category;
                     }
                 }
@@ -245,11 +246,11 @@ public partial class App : Application
                 ModConfigUpdater.Write(mod.FolderPath, jaName, jaDesc);
 
                 // userdata.json 更新
-                modData.GameBananaId   = gbId;
-                modData.Category       = category;
-                modData.FetchedAt      = DateTime.UtcNow;
+                modData.GameBananaId = gbId;
+                modData.Category = category;
+                modData.FetchedAt = DateTime.UtcNow;
                 modData.FetchedVersion = mod.ModVersion;
-                modData.TranslatedName        = jaName;
+                modData.TranslatedName = jaName;
                 modData.TranslatedDescription = jaDesc;
                 userData.Mods[mod.ModId] = modData;
             }
@@ -264,7 +265,7 @@ public partial class App : Application
             // C-2: 例外発生時も含め確実にフラグをリセット
             Current.Dispatcher.Invoke(() =>
             {
-                modListVm.IsUpdating     = false;
+                modListVm.IsUpdating = false;
                 modListVm.UpdateProgress = "";
             });
         }
@@ -272,7 +273,8 @@ public partial class App : Application
 
     private static void ApplySortAllGames(MainViewModel mainVm, ReloadedInstall install)
     {
-        var depMap = mainVm.AllMods.ToDictionary(
+        var catalog = mainVm.AllMods;
+        var depMap = catalog.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<string>)kv.Value.Dependencies,
             StringComparer.OrdinalIgnoreCase);
@@ -282,22 +284,30 @@ public partial class App : Application
         {
             if (game.SortedMods.Count == 0) continue;
 
-            var enabledSet    = new HashSet<string>(game.EnabledMods, StringComparer.OrdinalIgnoreCase);
-            var enabledGroup  = game.SortedMods.Where(enabledSet.Contains).ToList();
-            var disabledGroup = game.SortedMods.Where(id => !enabledSet.Contains(id)).ToList();
+            var enabledSet = new HashSet<string>(game.EnabledMods, StringComparer.OrdinalIgnoreCase);
+
+            // IsLibrary MOD は常に enabled グループへ
+            var enabledGroup = game.SortedMods
+                .Where(id => enabledSet.Contains(id) ||
+                             (catalog.TryGetValue(id, out var m) && m.IsLibrary))
+                .ToList();
+            var disabledGroup = game.SortedMods
+                .Where(id => !enabledGroup.Contains(id, StringComparer.OrdinalIgnoreCase))
+                .ToList();
 
             var sortedEnabled  = LoadOrderSorter.Sort(enabledGroup,  depMap);
             var sortedDisabled = LoadOrderSorter.Sort(disabledGroup, depMap);
-            var newSorted = sortedEnabled.Concat(sortedDisabled).ToList();
-
-            bool changed = !newSorted.SequenceEqual(
-                game.SortedMods, StringComparer.OrdinalIgnoreCase);
-            if (!changed) continue;
+            var newSorted  = sortedEnabled.Concat(sortedDisabled).ToList();
+            var newEnabled = sortedEnabled.ToList();
 
             var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
             if (!File.Exists(configPath)) continue;
 
-            AppConfigWriter.WriteOrder(configPath, game.AppId, newSorted);
+            bool sortChanged    = !newSorted.SequenceEqual(game.SortedMods,  StringComparer.OrdinalIgnoreCase);
+            bool enabledChanged = !newEnabled.SequenceEqual(game.EnabledMods, StringComparer.OrdinalIgnoreCase);
+            if (!sortChanged && !enabledChanged) continue;
+
+            AppConfigWriter.WriteEnabledAndSorted(configPath, game.AppId, newEnabled, newSorted);
             anyChanged = true;
         }
 
