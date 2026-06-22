@@ -30,7 +30,7 @@ public static class ModDiagnostics
                 if (!catalog.ContainsKey(dep))
                     result.Add(new Diagnostic(modId, DiagnosticSeverity.Warning,
                         $"必要な依存MOD「{dep}」が見つかりません。動作しない可能性があります。"));
-                else if (!enabled.Contains(dep))
+                else if (!enabled.Contains(dep) && !catalog[dep].IsLibrary)
                     result.Add(new Diagnostic(modId, DiagnosticSeverity.Warning,
                         $"必要な依存MOD「{DisplayName(catalog, dep)}」が無効です。有効にしてください。"));
             }

@@ -6,6 +6,10 @@ public class ModDiagnosticsTests
         new(id, id, "", "1.0", "", Array.Empty<string>(), deps ?? Array.Empty<string>(),
             Array.Empty<string>(), appIds, null, null, null, null, "C:\\x");
 
+    private static ModInfo LibMod(string id, string[] appIds) =>
+        new(id, id, "", "1.0", "", Array.Empty<string>(), Array.Empty<string>(),
+            Array.Empty<string>(), appIds, null, null, null, null, "C:\\x", IsLibrary: true);
+
     private static GameInfo Game(string appId, string[] enabled) =>
         new(appId, appId, "", null, enabled, enabled, "C:\\g");
 
@@ -28,6 +32,19 @@ public class ModDiagnosticsTests
         // Lib は有効リストに無い
         var diags = ModDiagnostics.Analyze(Game("p5r.exe", new[] { "A" }), cat, Array.Empty<FileConflict>());
         Assert.Contains(diags, d => d.ModId == "A" && d.Severity == DiagnosticSeverity.Warning && d.Message.Contains("無効"));
+    }
+
+    [Fact]
+    public void No_warning_for_disabled_library_dependency()
+    {
+        var cat = new Dictionary<string, ModInfo>
+        {
+            ["A"] = Mod("A", new[] { "p5r.exe" }, new[] { "Lib" }),
+            ["Lib"] = LibMod("Lib", new[] { "p5r.exe" }),
+        };
+        // Lib はライブラリMODで有効リストに無い（正常）
+        var diags = ModDiagnostics.Analyze(Game("p5r.exe", new[] { "A" }), cat, Array.Empty<FileConflict>());
+        Assert.DoesNotContain(diags, d => d.ModId == "A" && d.Message.Contains("無効"));
     }
 
     [Fact]
