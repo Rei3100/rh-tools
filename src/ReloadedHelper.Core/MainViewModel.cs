@@ -172,11 +172,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!File.Exists(configPath)) return;
 
         AppConfigWriter.WriteEnabledAndSorted(configPath, game.AppId, newEnabled, newSorted);
-
-        var prevId = game.AppId;
-        LoadFrom(_install);
-        var restored = Games.FirstOrDefault(g => g.AppId == prevId);
-        if (restored is not null) SelectedGame = restored;
+        Reload();   // SelectedGame を保持して再読込（タブ飛び防止・DRY）
     }
 
     private void RebuildEntries()

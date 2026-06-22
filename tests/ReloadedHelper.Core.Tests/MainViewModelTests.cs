@@ -104,4 +104,15 @@ public class MainViewModelTests
         vm.ApplyMetadataToRow("nope", "x", "y", null, null); // 例外を投げない
         Assert.Single(vm.Entries);
     }
+
+    [Fact]
+    public void ToggleEnabled_without_install_keeps_selection_and_does_not_throw()
+    {
+        var vm = new MainViewModel();
+        var entry = new ModLoadEntry(1, "m1", null, false);
+        // SelectedGame も _install も未設定 → 早期 return、例外なし・選択不変
+        var ex = Record.Exception(() => vm.ToggleEnabled(entry));
+        Assert.Null(ex);
+        Assert.Null(vm.SelectedGame);
+    }
 }
