@@ -297,6 +297,7 @@
                                 <Grid.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="編集..."         Click="EditMenu_Click"/>
+                                        <MenuItem Header="設定..."         Click="ConfigMenu_Click"/>
                                         <MenuItem Header="このMODを更新"   Click="RefreshMenu_Click"/>
                                         <Separator/>
                                         <MenuItem Header="削除（ゴミ箱へ）" Click="DeleteMenu_Click"/>

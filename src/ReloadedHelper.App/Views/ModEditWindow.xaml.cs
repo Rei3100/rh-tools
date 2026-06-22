@@ -31,6 +31,11 @@ public partial class ModEditWindow : Window
 
         // フレームワーク MOD は削除禁止
         BtnDelete.Visibility = _entry.IsLibrary ? Visibility.Collapsed : Visibility.Visible;
+
+        // Config.json の有無に応じてボタン表示を切替
+        BtnConfig.Visibility =
+            (_vm.Install is { } inst && ModConfigStore.Exists(inst, _entry.ModId))
+                ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void SaveFields()
@@ -58,6 +63,13 @@ public partial class ModEditWindow : Window
     }
 
     private void BtnCancel_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void BtnConfig_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.Install is not { } install) return;
+        var win = new ModConfigWindow(_entry.ModId, _entry.DisplayName, install) { Owner = this };
+        win.ShowDialog();
+    }
 
     private void BtnRefresh_Click(object sender, RoutedEventArgs e)
     {
