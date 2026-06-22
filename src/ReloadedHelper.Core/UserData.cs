@@ -15,6 +15,11 @@ public sealed class ModUserData
     public string? Category { get; set; }
     public DateTime? FetchedAt { get; set; }
     public string? FetchedVersion { get; set; }
+
+    // セクションA 追加
+    public string? OriginalName { get; set; }
+    public string? OriginalDescription { get; set; }
+    public string? Author { get; set; }
 }
 
 public sealed class UserDataFile

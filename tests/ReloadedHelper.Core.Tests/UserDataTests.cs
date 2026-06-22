@@ -48,4 +48,27 @@ public class UserDataTests
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
     }
+
+    [Fact]
+    public void Roundtrip_preserves_new_fields()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"ud-{Guid.NewGuid():N}.json");
+        try
+        {
+            var file = new UserDataFile();
+            file.Mods["m1"] = new ModUserData
+            {
+                OriginalName = "Beta Lavenza",
+                OriginalDescription = "restores model",
+                Author = "lonelycrow"
+            };
+            UserDataStore.Save(path, file);
+            var loaded = UserDataStore.Load(path);
+
+            Assert.Equal("Beta Lavenza", loaded.Mods["m1"].OriginalName);
+            Assert.Equal("restores model", loaded.Mods["m1"].OriginalDescription);
+            Assert.Equal("lonelycrow", loaded.Mods["m1"].Author);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
 }
