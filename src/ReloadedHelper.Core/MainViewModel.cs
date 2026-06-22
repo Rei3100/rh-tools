@@ -28,7 +28,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public Func<Task>? RefreshAction { get; set; }
+    public Func<Task>? ForceRefreshAction { get; set; }
     public Func<IReadOnlyList<string>, Task>? RefreshSelectedAction { get; set; }
+
+    public ObservableCollection<string> UpdateReportLines { get; } = new();
 
     public ObservableCollection<GameInfo> Games { get; } = new();
     public ObservableCollection<ModLoadEntry> Entries { get; } = new();

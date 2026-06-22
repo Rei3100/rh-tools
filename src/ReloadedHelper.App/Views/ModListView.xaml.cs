@@ -62,6 +62,12 @@ public partial class ModListView : UserControl
             await action();
     }
 
+    private async void ForceRefreshButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm && !vm.IsUpdating && vm.ForceRefreshAction is { } action)
+            await action();
+    }
+
     // URL ハイパーリンク（既存の動作を維持）
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
     {

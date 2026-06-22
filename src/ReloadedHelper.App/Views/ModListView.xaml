@@ -226,8 +226,46 @@
                                 Foreground="{DynamicResource TextBodyBrush}"
                                 BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
                                 FontSize="{DynamicResource FontSizeLabel}"/>
+                        <Button x:Name="ForceRefreshButton" Content="全件強制取り直し"
+                                Click="ForceRefreshButton_Click"
+                                Padding="8,4" Margin="8,0,0,0" Cursor="Hand"
+                                Background="{DynamicResource BgInputBrush}"
+                                Foreground="{DynamicResource TextBodyBrush}"
+                                BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                                FontSize="{DynamicResource FontSizeLabel}"/>
                     </StackPanel>
                 </Grid>
+
+                <!-- 更新レポートパネル（IsUpdating 中のみ表示） -->
+                <Border DockPanel.Dock="Top" Margin="0,0,0,6"
+                        Background="{DynamicResource BgBarBrush}"
+                        BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                        CornerRadius="6" MaxHeight="120">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsUpdating}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding UpdateReportLines}" Padding="6,4">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               FontSize="{DynamicResource FontSizeLabel}"
+                                               Foreground="{DynamicResource TextDetailBrush}"
+                                               TextWrapping="NoWrap"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
 
                 <ListBox x:Name="ModListBox"
                          ItemsSource="{Binding Entries}"
