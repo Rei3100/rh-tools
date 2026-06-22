@@ -16,7 +16,8 @@ public sealed record ModInfo(
     string? GitHubUserName,
     string? GitHubRepositoryName,
     string? IconFileName,
-    string FolderPath)
+    string FolderPath,
+    bool IsLibrary = false)
 {
     public string? IconPath =>
         string.IsNullOrEmpty(IconFileName) ? null : Path.Combine(FolderPath, IconFileName);
@@ -39,21 +40,29 @@ public sealed record GameInfo(
     public string DisplayName => string.IsNullOrEmpty(AppName) ? AppId : AppName;
 }
 
-public sealed record ModLoadEntry(int Order, string ModId, ModInfo? Info, bool Enabled, string? Category = null)
+public sealed record ModLoadEntry(
+    int Order,
+    string ModId,
+    ModInfo? Info,
+    bool Enabled,
+    string? Category = null,
+    bool IsLibrary = false)
 {
     public string DisplayName =>
         Info is { ModName.Length: > 0 } ? Info.ModName : ModId;
 
-    public string? CategoryLabel => Category switch
-    {
-        "Sound"              => "サウンド",
-        "Skin"               => "スキン",
-        "Texture"            => "テクスチャ",
-        "UI"                 => "UI",
-        "Gameplay Mechanics" => "ゲームプレイ",
-        "Misc"               => "その他",
-        "Quality Of Life"    => "QOL",
-        null                 => null,
-        _                    => Category,
-    };
+    public string? CategoryLabel =>
+        IsLibrary ? "フレームワーク" :
+        Category switch
+        {
+            "Sound" => "サウンド",
+            "Skin" => "スキン",
+            "Texture" => "テクスチャ",
+            "UI" => "UI",
+            "Gameplay Mechanics" => "ゲームプレイ",
+            "Misc" => "その他",
+            "Quality Of Life" => "QOL",
+            null => null,
+            _ => Category,
+        };
 }

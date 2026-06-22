@@ -47,6 +47,9 @@ public static class ModConfigParser
                 iconFileName = null;
             }
 
+            // IsLibrary flag: defaults to false if missing
+            var isLibrary = GetBool(root, "IsLibrary");
+
             return new ModInfo(
                 modId,
                 modName,
@@ -61,7 +64,8 @@ public static class ModConfigParser
                 gitHubUserName,
                 gitHubRepositoryName,
                 iconFileName,
-                folderPath);
+                folderPath,
+                isLibrary);
         }
     }
 
@@ -114,5 +118,19 @@ public static class ModConfigParser
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Extracts a boolean value from a JSON element, returning false if the property
+    /// is missing or not a boolean.
+    /// </summary>
+    private static bool GetBool(JsonElement element, string propertyName)
+    {
+        if (!element.TryGetProperty(propertyName, out var prop))
+        {
+            return false;
+        }
+
+        return prop.ValueKind == JsonValueKind.True;
     }
 }
