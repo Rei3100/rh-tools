@@ -214,6 +214,12 @@
                                 Foreground="{DynamicResource TextBodyBrush}"
                                 BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
                                 FontSize="{DynamicResource FontSizeLabel}"/>
+                        <Button x:Name="DiagnoseButton" Content="診断" Click="DiagnoseButton_Click"
+                                Padding="8,4" Margin="8,0,0,0" Cursor="Hand"
+                                Background="{DynamicResource BgInputBrush}"
+                                Foreground="{DynamicResource TextBodyBrush}"
+                                BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                                FontSize="{DynamicResource FontSizeLabel}"/>
                     </StackPanel>
                 </Grid>
 
