@@ -15,21 +15,28 @@ public class GameBananaClientTests
     }
 
     [Fact]
-    public async Task FetchAsync_parses_profile_page_response()
+    public async Task FetchAsync_parses_apiv11_object_response()
     {
-        // ProfilePage?fields=name,text,Category().name,Game().id → 順序通りの配列
-        var json = """["CRI FileSystem V2 Hook","Hooks the CRI filesystem.","Sound","8809"]""";
+        var json = """
+        {"_sName":"Persona 5 2016 Beta Lavenza",
+         "_sText":"This mod restores Lavenza's old beta model.<br><br>Warning",
+         "_aCategory":{"_sName":"Characters"},
+         "_aGame":{"_idRow":16951},
+         "_aSubmitter":{"_sName":"lonelycrow"}}
+        """;
         var handler = new FakeHttpMessageHandler(json);
         var client = new GameBananaClient(new System.Net.Http.HttpClient(handler));
 
-        var result = await client.FetchAsync("123456");
+        var result = await client.FetchAsync("491359");
 
         Assert.NotNull(result);
-        Assert.Equal("CRI FileSystem V2 Hook", result!.Name);
-        Assert.Equal("Hooks the CRI filesystem.", result.Text);
-        Assert.Equal("Sound", result.Category);
-        Assert.Equal("8809", result.GameId);
-        Assert.Contains("api.gamebanana.com/apiv11/Mod/123456/ProfilePage", handler.LastRequestUri);
+        Assert.Equal("Persona 5 2016 Beta Lavenza", result!.Name);
+        Assert.StartsWith("This mod restores", result.Text);
+        Assert.Equal("Characters", result.Category);
+        Assert.Equal("16951", result.GameId);
+        Assert.Equal("lonelycrow", result.Author);
+        Assert.Contains("gamebanana.com/apiv11/Mod/491359", handler.LastRequestUri);
+        Assert.DoesNotContain("api.gamebanana.com", handler.LastRequestUri);
     }
 
     [Fact]

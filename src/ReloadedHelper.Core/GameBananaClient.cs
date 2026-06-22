@@ -4,8 +4,6 @@ using System.Text.RegularExpressions;
 
 namespace ReloadedHelper.Core;
 
-public sealed record GameBananaModInfo(string Name, string Text, string? Category, string GameId);
-
 public sealed class GameBananaClient(HttpClient http)
 {
     private static readonly TimeSpan ApiTimeout = TimeSpan.FromSeconds(3);
@@ -20,8 +18,8 @@ public sealed class GameBananaClient(HttpClient http)
 
     public async Task<GameBananaModInfo?> FetchAsync(string gbId, CancellationToken ct = default)
     {
-        var url = $"https://api.gamebanana.com/apiv11/Mod/{gbId}/ProfilePage" +
-                  "?fields=name%2Ctext%2CCategory().name%2CGame().id";
+        var url = $"https://gamebanana.com/apiv11/Mod/{gbId}" +
+                  "?_csvProperties=_sName,_sText,_aCategory,_aGame,_aSubmitter";
         try
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -50,24 +48,30 @@ public sealed class GameBananaClient(HttpClient http)
 
     private static GameBananaModInfo? ParseModInfo(string json)
     {
-        // 期待形式: ["name", "text", "Category", "gameId"]
         try
         {
             using var doc = JsonDocument.Parse(json);
-            var arr = doc.RootElement;
-            if (arr.ValueKind != JsonValueKind.Array || arr.GetArrayLength() < 4) return null;
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return null;
 
-            var name = arr[0].GetString() ?? "";
-            var text = arr[1].GetString() ?? "";
-            var category = arr[2].ValueKind == JsonValueKind.String ? arr[2].GetString() : null;
-            var gameId = arr[3].ValueKind == JsonValueKind.String
-                ? arr[3].GetString() ?? ""
-                : arr[3].GetInt64().ToString();
+            var name = GetStr(root, "_sName") ?? "";
+            var text = GetStr(root, "_sText") ?? "";
+            string? category = root.TryGetProperty("_aCategory", out var cat) && cat.ValueKind == JsonValueKind.Object
+                ? GetStr(cat, "_sName") : null;
+            string gameId = "";
+            if (root.TryGetProperty("_aGame", out var game) && game.ValueKind == JsonValueKind.Object
+                && game.TryGetProperty("_idRow", out var gid))
+                gameId = gid.ValueKind == JsonValueKind.Number ? gid.GetInt64().ToString() : (gid.GetString() ?? "");
+            string? author = root.TryGetProperty("_aSubmitter", out var sub) && sub.ValueKind == JsonValueKind.Object
+                ? GetStr(sub, "_sName") : null;
 
-            return new GameBananaModInfo(name, text, category, gameId);
+            return new GameBananaModInfo(name, text, category, gameId, author);
         }
         catch (JsonException) { return null; }
     }
+
+    private static string? GetStr(JsonElement el, string name) =>
+        el.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.String ? p.GetString() : null;
 
     private static (string GbId, string GbGameId)? ParseSearchResult(
         string json, string modName, string gbGameId)
