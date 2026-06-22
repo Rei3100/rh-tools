@@ -1,0 +1,31 @@
+<Window x:Class="ReloadedHelper.App.ThemedDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True"
+        Background="Transparent" SizeToContent="Height" Width="420"
+        ShowInTaskbar="False"
+        FontFamily="{DynamicResource MainFont}">
+    <Border Background="{DynamicResource BgBarBrush}"
+            BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+            CornerRadius="12" Padding="20">
+        <StackPanel>
+            <TextBlock x:Name="TitleText" FontSize="16" FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+            <TextBlock x:Name="MessageText" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,20"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="CancelButton" Content="キャンセル" MinWidth="88"
+                        Margin="0,0,8,0" Padding="14,7" Click="Cancel_Click"
+                        Background="{DynamicResource BgInputBrush}"
+                        Foreground="{DynamicResource TextBodyBrush}"
+                        BorderBrush="{DynamicResource BorderInputBrush}"/>
+                <Button x:Name="OkButton" Content="OK" MinWidth="88" Padding="14,7"
+                        Click="Ok_Click"
+                        Background="{DynamicResource AccentBrush}"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        BorderThickness="0"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>
