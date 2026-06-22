@@ -95,4 +95,21 @@ public class ModConfigUpdaterTests
         }
         finally { Directory.Delete(dir, true); }
     }
+
+    [Fact]
+    public void Write_overwrites_author_when_provided()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"mc-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, "ModConfig.json"),
+                """{"ModId":"x","ModName":"Old","ModAuthor":"OldAuthor","ModDescription":"d"}""");
+            ModConfigUpdater.Write(dir, "新名", "新説明", "lonelycrow");
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(dir, "ModConfig.json")));
+            Assert.Equal("lonelycrow", doc.RootElement.GetProperty("ModAuthor").GetString());
+            Assert.Equal("新名", doc.RootElement.GetProperty("ModName").GetString());
+        }
+        finally { Directory.Delete(dir, true); }
+    }
 }

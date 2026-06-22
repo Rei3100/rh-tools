@@ -12,7 +12,7 @@ public static class ModConfigUpdater
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    public static void Write(string modFolderPath, string japaneseName, string japaneseDescription)
+    public static void Write(string modFolderPath, string japaneseName, string japaneseDescription, string? author = null)
     {
         var configPath = Path.Combine(modFolderPath, "ModConfig.json");
         if (!File.Exists(configPath)) return;
@@ -26,7 +26,7 @@ public static class ModConfigUpdater
             using (var writer = new Utf8JsonWriter(ms, WriterOptions))
             {
                 writer.WriteStartObject();
-                bool wroteModName = false, wroteModDescription = false;
+                bool wroteModName = false, wroteModDescription = false, wroteAuthor = false;
                 foreach (var prop in doc.RootElement.EnumerateObject())
                 {
                     if (prop.Name == "ModName")
@@ -39,6 +39,11 @@ public static class ModConfigUpdater
                         writer.WriteString("ModDescription", japaneseDescription);
                         wroteModDescription = true;
                     }
+                    else if (prop.Name == "ModAuthor" && author is not null)
+                    {
+                        writer.WriteString("ModAuthor", author);
+                        wroteAuthor = true;
+                    }
                     else
                     {
                         prop.WriteTo(writer);
@@ -47,6 +52,7 @@ public static class ModConfigUpdater
                 // フィールドが元々なければ末尾に追加
                 if (!wroteModName) writer.WriteString("ModName", japaneseName);
                 if (!wroteModDescription) writer.WriteString("ModDescription", japaneseDescription);
+                if (author is not null && !wroteAuthor) writer.WriteString("ModAuthor", author);
                 writer.WriteEndObject();
             }
 
