@@ -5,6 +5,7 @@
         xmlns:app="clr-namespace:ReloadedHelper.App"
         xmlns:views="clr-namespace:ReloadedHelper.App.Views"
         xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Reloaded Helper" Height="700" Width="1100" MinWidth="800" MinHeight="500"
         Background="{DynamicResource BgMainBrush}"
         FontFamily="{DynamicResource MainFont}"
@@ -15,133 +16,159 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
     </Window.Resources>
 
-    <Grid>
-        <Grid.LayoutTransform>
-            <ScaleTransform ScaleX="{Binding SettingsVm.Scale}"
-                            ScaleY="{Binding SettingsVm.Scale}"/>
-        </Grid.LayoutTransform>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="64"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="36" ResizeBorderThickness="6"
+                            GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
 
-        <!-- ── システムトレイアイコン（XAML で宣言してトレイに正しく登録） ── -->
-        <tb:TaskbarIcon x:Name="TrayIcon" Grid.ColumnSpan="2"
-                        IconSource="/Assets/app.ico"
-                        ToolTipText="Reloaded Helper"
-                        Visibility="Collapsed"
-                        TrayLeftMouseDown="TrayIcon_TrayLeftMouseDown">
-            <tb:TaskbarIcon.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="表示" Click="TrayShow_Click"/>
-                    <Separator/>
-                    <MenuItem Header="終了" Click="TrayExit_Click"/>
-                </ContextMenu>
-            </tb:TaskbarIcon.ContextMenu>
-        </tb:TaskbarIcon>
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <!-- ── サイドナビ ── -->
-        <Border Grid.Column="0" Background="{DynamicResource BgBarBrush}">
-            <DockPanel LastChildFill="False">
-
-                <!-- ロゴ -->
-                <Border DockPanel.Dock="Top" Height="64">
-                    <TextBlock Text="rh" HorizontalAlignment="Center" VerticalAlignment="Center"
-                               FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
-                </Border>
-
-                <!-- MOD 一覧ボタン（ToolTip なし） -->
-                <Button DockPanel.Dock="Top" Click="NavModList_Click">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsModListActive}" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource BgNavSelectedBrush}"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <TextBlock Text="&#x2261;" FontSize="22" Foreground="{DynamicResource TextBodyBrush}"/>
-                </Button>
-
-                <!-- 設定ボタン（ToolTip なし） -->
-                <Button DockPanel.Dock="Top" Click="NavSettings_Click">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsSettingsActive}" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource BgNavSelectedBrush}"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <TextBlock Text="&#x2699;" FontSize="20" Foreground="{DynamicResource TextBodyBrush}"/>
-                </Button>
-
-                <!-- ヘルプボタン（下端、ToolTip なし） -->
-                <Button DockPanel.Dock="Bottom" Click="NavHelp_Click">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsHelpActive}" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource BgNavSelectedBrush}"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <TextBlock Text="?" FontSize="18" FontWeight="Bold"
-                               Foreground="{DynamicResource TextBodyBrush}"/>
-                </Button>
-
-            </DockPanel>
-        </Border>
-
-        <!-- ── コンテンツエリア（MOD 一覧のみ、オーバーレイは外に移動） ── -->
-        <Grid Grid.Column="1">
-            <views:ModListView DataContext="{Binding ModListVm}"/>
+        <!-- タイトルバー -->
+        <Grid Grid.Row="0" Background="{DynamicResource BgBarBrush}"
+              MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <TextBlock Text="Reloaded Helper" VerticalAlignment="Center" Margin="14,0,0,0"
+                       Foreground="{DynamicResource TextLabelBrush}" FontSize="13"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button Content="&#xE921;" Click="MinButton_Click" Style="{StaticResource CaptionButtonStyle}"/>
+                <Button Content="&#xE922;" Click="MaxButton_Click" Style="{StaticResource CaptionButtonStyle}"/>
+                <Button Content="&#xE8BB;" Click="CloseButton_Click" Style="{StaticResource CaptionCloseButtonStyle}"/>
+            </StackPanel>
         </Grid>
 
-        <!-- ── 設定・ヘルプ オーバーレイ（ColumnSpan="2" でウィンドウ全幅センタリング） ── -->
-        <Grid Grid.ColumnSpan="2"
-              Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVisConverter}}">
+        <!-- 既存の2カラム内容（ズーム対象） -->
+        <Grid Grid.Row="1">
+            <Grid.LayoutTransform>
+                <ScaleTransform ScaleX="{Binding SettingsVm.Scale}"
+                                ScaleY="{Binding SettingsVm.Scale}"/>
+            </Grid.LayoutTransform>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="64"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <!-- 半透明バックドロップ（クリックで閉じる） -->
-            <Rectangle Fill="Black" Opacity="0.45"
-                       MouseLeftButtonDown="Backdrop_MouseDown"/>
+            <!-- ── システムトレイアイコン（XAML で宣言してトレイに正しく登録） ── -->
+            <tb:TaskbarIcon x:Name="TrayIcon" Grid.ColumnSpan="2"
+                            IconSource="/Assets/app.ico"
+                            ToolTipText="Reloaded Helper"
+                            Visibility="Collapsed"
+                            TrayLeftMouseDown="TrayIcon_TrayLeftMouseDown">
+                <tb:TaskbarIcon.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="表示" Click="TrayShow_Click"/>
+                        <Separator/>
+                        <MenuItem Header="終了" Click="TrayExit_Click"/>
+                    </ContextMenu>
+                </tb:TaskbarIcon.ContextMenu>
+            </tb:TaskbarIcon>
 
-            <!-- パネル本体 -->
-            <Border Width="560" MaxHeight="620"
-                    Background="{DynamicResource BgBarBrush}"
-                    BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
-                    CornerRadius="12"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+            <!-- ── サイドナビ ── -->
+            <Border Grid.Column="0" Background="{DynamicResource BgBarBrush}">
+                <DockPanel LastChildFill="False">
 
-                    <!-- 閉じるボタン -->
-                    <Button Grid.Row="0" Content="✕"
-                            Width="32" Height="32"
-                            HorizontalAlignment="Right" Margin="8"
-                            Click="CloseOverlay_Click"
-                            Style="{StaticResource NavButtonStyle}"/>
+                    <!-- ロゴ -->
+                    <Border DockPanel.Dock="Top" Height="64">
+                        <TextBlock Text="rh" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                    </Border>
 
-                    <!-- コンテンツ（設定 or ヘルプ） -->
-                    <ContentControl Grid.Row="1"
-                                    Content="{Binding CurrentOverlayView}">
-                        <ContentControl.Resources>
-                            <DataTemplate DataType="{x:Type core:SettingsViewModel}">
-                                <views:SettingsView/>
-                            </DataTemplate>
-                            <DataTemplate DataType="{x:Type app:HelpViewModel}">
-                                <views:HelpView/>
-                            </DataTemplate>
-                        </ContentControl.Resources>
-                    </ContentControl>
-                </Grid>
+                    <!-- MOD 一覧ボタン（ToolTip なし） -->
+                    <Button DockPanel.Dock="Top" Click="NavModList_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsModListActive}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource BgNavSelectedBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock Text="&#x2261;" FontSize="22" Foreground="{DynamicResource TextBodyBrush}"/>
+                    </Button>
+
+                    <!-- 設定ボタン（ToolTip なし） -->
+                    <Button DockPanel.Dock="Top" Click="NavSettings_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSettingsActive}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource BgNavSelectedBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock Text="&#x2699;" FontSize="20" Foreground="{DynamicResource TextBodyBrush}"/>
+                    </Button>
+
+                    <!-- ヘルプボタン（下端、ToolTip なし） -->
+                    <Button DockPanel.Dock="Bottom" Click="NavHelp_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsHelpActive}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource BgNavSelectedBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock Text="?" FontSize="18" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextBodyBrush}"/>
+                    </Button>
+
+                </DockPanel>
             </Border>
+
+            <!-- ── コンテンツエリア（MOD 一覧のみ、オーバーレイは外に移動） ── -->
+            <Grid Grid.Column="1">
+                <views:ModListView DataContext="{Binding ModListVm}"/>
+            </Grid>
+
+            <!-- ── 設定・ヘルプ オーバーレイ（ColumnSpan="2" でウィンドウ全幅センタリング） ── -->
+            <Grid Grid.ColumnSpan="2"
+                  Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVisConverter}}">
+
+                <!-- 半透明バックドロップ（クリックで閉じる） -->
+                <Rectangle Fill="Black" Opacity="0.45"
+                           MouseLeftButtonDown="Backdrop_MouseDown"/>
+
+                <!-- パネル本体 -->
+                <Border Width="560" MaxHeight="620"
+                        Background="{DynamicResource BgBarBrush}"
+                        BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                        CornerRadius="12"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 閉じるボタン -->
+                        <Button Grid.Row="0" Content="✕"
+                                Width="32" Height="32"
+                                HorizontalAlignment="Right" Margin="8"
+                                Click="CloseOverlay_Click"
+                                Style="{StaticResource NavButtonStyle}"/>
+
+                        <!-- コンテンツ（設定 or ヘルプ） -->
+                        <ContentControl Grid.Row="1"
+                                        Content="{Binding CurrentOverlayView}">
+                            <ContentControl.Resources>
+                                <DataTemplate DataType="{x:Type core:SettingsViewModel}">
+                                    <views:SettingsView/>
+                                </DataTemplate>
+                                <DataTemplate DataType="{x:Type app:HelpViewModel}">
+                                    <views:HelpView/>
+                                </DataTemplate>
+                            </ContentControl.Resources>
+                        </ContentControl>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
