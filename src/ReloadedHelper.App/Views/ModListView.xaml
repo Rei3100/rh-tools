@@ -139,25 +139,6 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <!-- 更新プログレスラベル（更新中のみ表示） -->
-                    <TextBlock Grid.Column="0"
-                               Text="{Binding UpdateProgress, Mode=OneWay}"
-                               FontSize="{DynamicResource FontSizeLabel}"
-                               Foreground="{DynamicResource AccentBrush}"
-                               VerticalAlignment="Center"
-                               Margin="4,0,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsUpdating}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-
                     <!-- フィルタボタン：全て / 有効 / 無効 -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Button Content="全て" Click="FilterAll_Click"
@@ -236,35 +217,67 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- 更新レポートパネル（IsUpdating 中のみ表示） -->
+                <!-- 更新レポートパネル（レポート行がある間は表示し続ける） -->
                 <Border DockPanel.Dock="Top" Margin="0,0,0,6"
                         Background="{DynamicResource BgBarBrush}"
                         BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
-                        CornerRadius="6" MaxHeight="120">
+                        CornerRadius="6" MaxHeight="140">
                     <Border.Style>
                         <Style TargetType="Border">
-                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Setter Property="Visibility" Value="Visible"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsUpdating}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible"/>
+                                <DataTrigger Binding="{Binding UpdateReportLines.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl ItemsSource="{Binding UpdateReportLines}" Padding="6,4">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}"
-                                               FontFamily="{DynamicResource MonoFont}"
-                                               FontSize="{DynamicResource FontSizeLabel}"
-                                               Foreground="{DynamicResource TextDetailBrush}"
-                                               TextWrapping="NoWrap"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <DockPanel>
+                        <!-- ヘッダ行：ラベル + 閉じるボタン -->
+                        <Grid DockPanel.Dock="Top" Margin="6,4,6,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding UpdateProgress, Mode=OneWay}"
+                                       FontSize="{DynamicResource FontSizeLabel}"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsUpdating}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <Button Grid.Column="1" Content="閉じる"
+                                    Click="ReportClose_Click"
+                                    Padding="6,2" Cursor="Hand"
+                                    Background="{DynamicResource BgInputBrush}"
+                                    Foreground="{DynamicResource TextBodyBrush}"
+                                    BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                                    FontSize="{DynamicResource FontSizeLabel}"/>
+                        </Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding UpdateReportLines}" Padding="6,2,6,4">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"
+                                                   FontFamily="{DynamicResource MonoFont}"
+                                                   FontSize="{DynamicResource FontSizeLabel}"
+                                                   Foreground="{DynamicResource TextDetailBrush}"
+                                                   TextWrapping="NoWrap"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
                 </Border>
 
                 <ListBox x:Name="ModListBox"
