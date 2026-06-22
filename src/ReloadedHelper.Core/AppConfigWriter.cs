@@ -77,4 +77,42 @@ public static class AppConfigWriter
 
         File.WriteAllBytes(configPath, ms.ToArray());
     }
+
+    public static void RemoveMod(string configPath, string appId, string modId)
+    {
+        LoadOrderBackupService.Backup(configPath, appId);
+
+        var original = File.ReadAllBytes(configPath);
+        using var doc = JsonDocument.Parse(original);
+
+        using var ms = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(ms, new JsonWriterOptions { Indented = true });
+
+        writer.WriteStartObject();
+        foreach (var prop in doc.RootElement.EnumerateObject())
+        {
+            switch (prop.Name)
+            {
+                case "EnabledMods":
+                case "SortedMods":
+                    writer.WritePropertyName(prop.Name);
+                    writer.WriteStartArray();
+                    foreach (var item in prop.Value.EnumerateArray())
+                    {
+                        var id = item.GetString();
+                        if (id != null && !string.Equals(id, modId, StringComparison.OrdinalIgnoreCase))
+                            writer.WriteStringValue(id);
+                    }
+                    writer.WriteEndArray();
+                    break;
+                default:
+                    prop.WriteTo(writer);
+                    break;
+            }
+        }
+        writer.WriteEndObject();
+        writer.Flush();
+
+        File.WriteAllBytes(configPath, ms.ToArray());
+    }
 }

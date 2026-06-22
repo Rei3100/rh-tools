@@ -16,7 +16,9 @@ public static class LoadOrderBuilder
             var id = game.SortedMods[i];
             catalog.TryGetValue(id, out var info);
             var category = userData?.Mods.GetValueOrDefault(id)?.Category;
-            list.Add(new ModLoadEntry(i + 1, id, info, enabled.Contains(id), category));
+            var isLibrary = info?.IsLibrary ?? false;
+            var isEnabled = enabled.Contains(id) || isLibrary;
+            list.Add(new ModLoadEntry(i + 1, id, info, isEnabled, category, isLibrary));
         }
         return list;
     }
@@ -32,9 +34,9 @@ public static class ModFilter
 
         result = mode switch
         {
-            FilterMode.EnabledOnly  => result.Where(e => e.Enabled),
+            FilterMode.EnabledOnly => result.Where(e => e.Enabled),
             FilterMode.DisabledOnly => result.Where(e => !e.Enabled),
-            _                       => result
+            _ => result
         };
 
         if (!string.IsNullOrWhiteSpace(search))

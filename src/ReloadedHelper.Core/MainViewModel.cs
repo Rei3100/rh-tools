@@ -28,8 +28,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public Func<Task>? RefreshAction { get; set; }
+    public Func<IReadOnlyList<string>, Task>? RefreshSelectedAction { get; set; }
 
-    public ObservableCollection<GameInfo> Games  { get; } = new();
+    public ObservableCollection<GameInfo> Games { get; } = new();
     public ObservableCollection<ModLoadEntry> Entries { get; } = new();
 
     private GameInfo? _selectedGame;
@@ -97,9 +98,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var shown = Entries.Count;
             return _filterMode switch
             {
-                FilterMode.EnabledOnly  => $"読み込み順 ・ 有効 {shown} / 全 {total} 件",
+                FilterMode.EnabledOnly => $"読み込み順 ・ 有効 {shown} / 全 {total} 件",
                 FilterMode.DisabledOnly => $"読み込み順 ・ 無効 {shown} / 全 {total} 件",
-                _                       => $"読み込み順 ・ 全 {total} 件"
+                _ => $"読み込み順 ・ 全 {total} 件"
             };
         }
     }
@@ -115,8 +116,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (SelectedGame is null) RebuildEntries();
     }
 
+    public void Reload()
+    {
+        if (_install is null) return;
+        var prevId = SelectedGame?.AppId;
+        LoadFrom(_install);
+        if (prevId is not null)
+        {
+            var restored = Games.FirstOrDefault(g => g.AppId == prevId);
+            if (restored is not null) SelectedGame = restored;
+        }
+    }
+
     public void ToggleEnabled(ModLoadEntry entry)
     {
+        if (entry.IsLibrary) return;  // フレームワーク MOD はトグル不可
         if (SelectedGame is null || _install is null) return;
 
         var game = SelectedGame;
@@ -130,11 +144,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
             kv => (IReadOnlyList<string>)kv.Value.Dependencies,
             StringComparer.OrdinalIgnoreCase);
 
-        var enabledGroup  = game.SortedMods.Where(enabledSet.Contains).ToList();
+        var enabledGroup = game.SortedMods.Where(enabledSet.Contains).ToList();
         var disabledGroup = game.SortedMods.Where(id => !enabledSet.Contains(id)).ToList();
-        var sortedEnabled  = LoadOrderSorter.Sort(enabledGroup, depMap);
+        var sortedEnabled = LoadOrderSorter.Sort(enabledGroup, depMap);
         var sortedDisabled = LoadOrderSorter.Sort(disabledGroup, depMap);
-        var newSorted  = sortedEnabled.Concat(sortedDisabled).ToList();
+        var newSorted = sortedEnabled.Concat(sortedDisabled).ToList();
         var newEnabled = sortedEnabled.ToList();
 
         var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
