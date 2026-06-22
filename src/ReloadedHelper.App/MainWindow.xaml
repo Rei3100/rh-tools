@@ -34,9 +34,18 @@
                        Foreground="{DynamicResource TextLabelBrush}" FontSize="13"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                <Button Content="&#xE921;" Click="MinButton_Click" Style="{StaticResource CaptionButtonStyle}"/>
-                <Button Content="&#xE922;" Click="MaxButton_Click" Style="{StaticResource CaptionButtonStyle}"/>
-                <Button Content="&#xE8BB;" Click="CloseButton_Click" Style="{StaticResource CaptionCloseButtonStyle}"/>
+                <Button Click="MinButton_Click" Style="{StaticResource CaptionButtonStyle}">
+                    <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets"
+                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                </Button>
+                <Button Click="MaxButton_Click" Style="{StaticResource CaptionButtonStyle}">
+                    <TextBlock Text="&#xE922;" FontFamily="Segoe MDL2 Assets"
+                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                </Button>
+                <Button Click="CloseButton_Click" Style="{StaticResource CaptionCloseButtonStyle}">
+                    <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets"
+                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                </Button>
             </StackPanel>
         </Grid>
 
