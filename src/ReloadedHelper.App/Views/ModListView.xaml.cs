@@ -1,4 +1,5 @@
 // src/ReloadedHelper.App/Views/ModListView.xaml.cs
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -65,9 +66,76 @@ public partial class ModListView : UserControl
     {
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
-            FileName        = e.Uri.AbsoluteUri,
+            FileName = e.Uri.AbsoluteUri,
             UseShellExecute = true
         });
         e.Handled = true;
+    }
+
+    // ── 複数選択 ──
+    private void ModList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var count = ModListBox.SelectedItems.Count;
+        RefreshSelectedButton.Content = $"選択中を更新 ({count}件)";
+        RefreshSelectedButton.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async void RefreshSelected_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        if (vm.RefreshSelectedAction is null) return;
+
+        var ids = ModListBox.SelectedItems
+            .OfType<ModLoadEntry>()
+            .Select(entry => entry.ModId)
+            .ToList();
+
+        if (ids.Count == 0) return;
+        await vm.RefreshSelectedAction(ids);
+    }
+
+    // ── 「…」ボタン ──
+    private void EditButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is ModLoadEntry entry)
+            OpenEditWindow(entry);
+    }
+
+    // ── 右クリックメニュー ──
+    private void EditMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (GetContextMenuEntry(sender) is { } entry) OpenEditWindow(entry);
+    }
+
+    private async void RefreshMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (GetContextMenuEntry(sender) is not { } entry) return;
+        if (DataContext is not MainViewModel vm) return;
+        if (vm.RefreshSelectedAction is null) return;
+        await vm.RefreshSelectedAction(new[] { entry.ModId });
+    }
+
+    private void DeleteMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (GetContextMenuEntry(sender) is { } entry)
+            OpenEditWindow(entry);
+    }
+
+    private void OpenEditWindow(ModLoadEntry entry)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        var win = new ModEditWindow(entry, vm);
+        win.Owner = Window.GetWindow(this);
+        win.ShowDialog();
+    }
+
+    private static ModLoadEntry? GetContextMenuEntry(object sender)
+    {
+        if (sender is MenuItem item &&
+            item.Parent is ContextMenu cm &&
+            cm.PlacementTarget is Grid grid &&
+            grid.DataContext is ModLoadEntry entry)
+            return entry;
+        return null;
     }
 }

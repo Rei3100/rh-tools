@@ -211,6 +211,15 @@
                                 </Style>
                             </Button.Style>
                         </Button>
+                        <Button x:Name="RefreshSelectedButton"
+                                Content="選択中を更新 (0件)"
+                                Click="RefreshSelected_Click"
+                                Visibility="Collapsed"
+                                Padding="8,4" Margin="0,0,3,0" Cursor="Hand"
+                                Background="{DynamicResource BgInputBrush}"
+                                Foreground="{DynamicResource TextBodyBrush}"
+                                BorderBrush="{DynamicResource BorderInputBrush}" BorderThickness="1"
+                                FontSize="{DynamicResource FontSizeLabel}"/>
                         <Button Content="今すぐ更新" Click="RefreshButton_Click"
                                 Padding="8,4" Margin="6,0,0,0" Cursor="Hand"
                                 Background="{DynamicResource BgInputBrush}"
@@ -220,8 +229,11 @@
                     </StackPanel>
                 </Grid>
 
-                <ListBox ItemsSource="{Binding Entries}"
+                <ListBox x:Name="ModListBox"
+                         ItemsSource="{Binding Entries}"
                          SelectedItem="{Binding SelectedEntry}"
+                         SelectionMode="Extended"
+                         SelectionChanged="ModList_SelectionChanged"
                          ItemContainerStyle="{DynamicResource ModCardItemStyle}"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
@@ -231,12 +243,21 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid Height="54">
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="編集..."         Click="EditMenu_Click"/>
+                                        <MenuItem Header="このMODを更新"   Click="RefreshMenu_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="削除（ゴミ箱へ）" Click="DeleteMenu_Click"/>
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="36"/>   <!-- 順番 -->
                                     <ColumnDefinition Width="50"/>   <!-- サムネ -->
                                     <ColumnDefinition Width="*"/>    <!-- 名前 + 作者 -->
                                     <ColumnDefinition Width="Auto"/> <!-- カテゴリバッジ -->
                                     <ColumnDefinition Width="52"/>   <!-- トグル -->
+                                    <ColumnDefinition Width="36"/>   <!-- … ボタン -->
                                 </Grid.ColumnDefinitions>
 
                                 <!-- 順番 -->
@@ -302,8 +323,26 @@
                                 <ToggleButton Grid.Column="4"
                                              IsChecked="{Binding Enabled, Mode=OneWay}"
                                              Click="ModToggle_Click"
-                                             Style="{DynamicResource ToggleSwitchStyle}"
-                                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <ToggleButton.Style>
+                                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleSwitchStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsLibrary}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ToggleButton.Style>
+                                </ToggleButton>
+
+                                <!-- … 編集ボタン -->
+                                <Button Grid.Column="5" Content="…"
+                                        Click="EditButton_Click" Tag="{Binding}"
+                                        Width="28" Height="28" Padding="0"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Background="Transparent" BorderThickness="0"
+                                        Foreground="{DynamicResource TextMetaBrush}"
+                                        Cursor="Hand" FontSize="14"/>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
