@@ -79,10 +79,11 @@ public partial class App : Application
         window.WindowState = WindowState.Maximized;
         window.Show();
         _ = Task.Run(CheckAndApplyUpdateAsync); // バックグラウンドで更新確認
-        modListVm.RefreshAction = () => RefreshModMetadataAsync(modListVm, install);
+        modListVm.RefreshAction = () => RefreshModMetadataAsync(modListVm, install, force: false);
+        modListVm.ForceRefreshAction = () => RefreshModMetadataAsync(modListVm, install, force: true);
         modListVm.RefreshSelectedAction = ids =>
-            Task.Run(() => RefreshModMetadataAsync(modListVm, install, ids));
-        _ = Task.Run(() => RefreshModMetadataAsync(modListVm, install));
+            Task.Run(() => RefreshModMetadataAsync(modListVm, install, force: true, ids));
+        _ = Task.Run(() => RefreshModMetadataAsync(modListVm, install, force: false));
     }
 
     private static async Task CheckAndApplyUpdateAsync()
@@ -136,133 +137,78 @@ public partial class App : Application
     }
 
     private static async Task RefreshModMetadataAsync(
-        MainViewModel modListVm,
-        ReloadedInstall install,
-        IReadOnlyList<string>? targetModIds = null)
+        MainViewModel modListVm, ReloadedInstall install,
+        bool force, IReadOnlyList<string>? targetModIds = null)
     {
-        // C-1/C-2: 二重実行防止 — Dispatcher 上でアトミックにフラグを確認・セット
         bool started = false;
         Current.Dispatcher.Invoke(() =>
         {
             if (modListVm.IsUpdating) return;
-            modListVm.IsUpdating = true;
-            started = true;
+            modListVm.IsUpdating = true; started = true;
+            modListVm.UpdateReportLines.Clear();
         });
-        if (!started) return;  // 既に実行中なら即座に返る
+        if (!started) return;
 
+        var results = new List<MetadataRefreshResult>();
         try
         {
             using var http = new System.Net.Http.HttpClient();
             http.DefaultRequestHeaders.UserAgent.ParseAdd("rh-tools/1.0");
-            var gbClient = new GameBananaClient(http);
-            var translator = new TranslationService(http);
+            var refresher = new ModMetadataRefresher(new GameBananaClient(http), new TranslationService(http));
 
             var userData = UserDataStore.Load(UserDataStore.DefaultPath);
-
-            // I-2: バックグラウンドスレッドから AllMods を安全に取得（スナップショット）
             var catalog = Current.Dispatcher.Invoke(() => modListVm.AllMods);
 
-            // targetModIds が null なら全件、指定があればその MOD のみ
-            var toProcess = targetModIds is null
-                ? catalog.Values.ToList()
-                : catalog.Values
-                    .Where(m => targetModIds.Contains(m.ModId, StringComparer.OrdinalIgnoreCase))
-                    .ToList();
+            var pool = targetModIds is null
+                ? RefreshSelector.Select(catalog.Values, userData, force)
+                : catalog.Values.Where(m => targetModIds.Contains(m.ModId, StringComparer.OrdinalIgnoreCase)).ToList();
 
-            int total = toProcess.Count;
+            int total = pool.Count, processed = 0;
             if (total == 0) return;
 
-            // 既知の GameBanana ID を持つ MOD から AppId → GB game ID のキャッシュを構築
-            var gameIdCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var mod in catalog.Values)
-            {
-                if (!userData.Mods.TryGetValue(mod.ModId, out var ud) || ud.GameBananaId is null) continue;
-                foreach (var appId in mod.SupportedAppIds)
-                {
-                    if (gameIdCache.ContainsKey(appId)) continue;
-                    var info = await gbClient.FetchAsync(ud.GameBananaId);
-                    if (info is not null) { gameIdCache[appId] = info.GameId; break; }
-                }
-            }
-
-            int processed = 0;
-
-            foreach (var mod in toProcess)
+            foreach (var mod in pool)
             {
                 processed++;
-                Current.Dispatcher.Invoke(() =>
-                    modListVm.UpdateProgress = $"更新中 {processed}/{total} 件...");
+                Current.Dispatcher.Invoke(() => modListVm.UpdateProgress = $"更新中 {processed}/{total} 件...");
 
                 userData.Mods.TryGetValue(mod.ModId, out var modData);
                 modData ??= new ModUserData();
 
-                // ── Step 1: URL から直接 ID 抽出 ──
-                var gbId = modData.GameBananaId ?? GameBananaClient.ExtractIdFromUrl(mod.ProjectUrl);
+                var r = await refresher.RefreshAsync(mod, modData);
+                results.Add(r);
 
-                // ── Step 2: 名前検索（キャッシュに game ID がある場合のみ）──
-                if (gbId is null)
-                {
-                    foreach (var appId in mod.SupportedAppIds)
-                    {
-                        if (!gameIdCache.TryGetValue(appId, out var cachedGameId)) continue;
-                        var found = await gbClient.SearchAsync(mod.ModName, cachedGameId);
-                        if (found is not null) { gbId = found.Value.GbId; break; }
-                    }
-                }
+                ModConfigUpdater.Write(mod.FolderPath, r.JaName, r.JaDesc, r.Author);
 
-                string jaName = mod.ModName;
-                string jaDesc = mod.ModDescription;
-                string? category = null;
-
-                if (gbId is not null)
-                {
-                    var gbInfo = await gbClient.FetchAsync(gbId);
-                    if (gbInfo is not null)
-                    {
-                        // game ID を各 AppId にキャッシュ
-                        foreach (var appId in mod.SupportedAppIds)
-                            gameIdCache.TryAdd(appId, gbInfo.GameId);
-
-                        jaName = await translator.TranslateAsync(gbInfo.Name, "ja");
-                        jaDesc = await translator.TranslateAsync(gbInfo.Text, "ja");
-                        category = gbInfo.Category;
-                    }
-                }
-                else
-                {
-                    // ── Step 3: マッチなし → 既存テキストを翻訳 ──
-                    jaName = await translator.TranslateAsync(mod.ModName, "ja");
-                    jaDesc = await translator.TranslateAsync(mod.ModDescription, "ja");
-                }
-
-                // GlossaryProvider で誤訳補正（サポート AppId のうち最初にマッチしたもの）
-                foreach (var appId in mod.SupportedAppIds)
-                {
-                    jaName = GlossaryProvider.Apply(jaName, appId);
-                    jaDesc = GlossaryProvider.Apply(jaDesc, appId);
-                }
-
-                // ModConfig.json に書き込み
-                ModConfigUpdater.Write(mod.FolderPath, jaName, jaDesc);
-
-                // userdata.json 更新
-                modData.GameBananaId = gbId;
-                modData.Category = category;
+                modData.GameBananaId = r.GbId;
+                modData.Category = r.Category;
+                modData.Author = r.Author;
+                modData.TranslatedName = r.JaName;
+                modData.TranslatedDescription = r.JaDesc;
                 modData.FetchedAt = DateTime.UtcNow;
                 modData.FetchedVersion = mod.ModVersion;
-                modData.TranslatedName = jaName;
-                modData.TranslatedDescription = jaDesc;
                 userData.Mods[mod.ModId] = modData;
+
+                // 1件ごとに即 UI 反映（タブは切り替わらない）
+                Current.Dispatcher.Invoke(() =>
+                {
+                    modListVm.ApplyMetadataToRow(mod.ModId, r.JaName, r.JaDesc, r.Category, r.Author);
+                    modListVm.UpdateReportLines.Add(UpdateReportLog.Format(r));
+                });
             }
 
             UserDataStore.Save(UserDataStore.DefaultPath, userData);
+            UpdateReportLog.Append(UpdateReportLog.DefaultPath, results);
 
-            Current.Dispatcher.Invoke(() => modListVm.LoadFrom(install));
+            // 最後に整合のため SelectedGame を保持して再読込
+            Current.Dispatcher.Invoke(() => modListVm.Reload());
         }
-        catch { /* 更新失敗は無視して起動を継続 */ }
+        catch (Exception ex)
+        {
+            Current.Dispatcher.Invoke(() =>
+                modListVm.UpdateReportLines.Add($"[エラー] 更新中に問題が発生: {ex.Message}"));
+        }
         finally
         {
-            // C-2: 例外発生時も含め確実にフラグをリセット
             Current.Dispatcher.Invoke(() =>
             {
                 modListVm.IsUpdating = false;
@@ -295,15 +241,15 @@ public partial class App : Application
                 .Where(id => !enabledGroup.Contains(id, StringComparer.OrdinalIgnoreCase))
                 .ToList();
 
-            var sortedEnabled  = LoadOrderSorter.Sort(enabledGroup,  depMap);
+            var sortedEnabled = LoadOrderSorter.Sort(enabledGroup, depMap);
             var sortedDisabled = LoadOrderSorter.Sort(disabledGroup, depMap);
-            var newSorted  = sortedEnabled.Concat(sortedDisabled).ToList();
+            var newSorted = sortedEnabled.Concat(sortedDisabled).ToList();
             var newEnabled = sortedEnabled.ToList();
 
             var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
             if (!File.Exists(configPath)) continue;
 
-            bool sortChanged    = !newSorted.SequenceEqual(game.SortedMods,  StringComparer.OrdinalIgnoreCase);
+            bool sortChanged = !newSorted.SequenceEqual(game.SortedMods, StringComparer.OrdinalIgnoreCase);
             bool enabledChanged = !newEnabled.SequenceEqual(game.EnabledMods, StringComparer.OrdinalIgnoreCase);
             if (!sortChanged && !enabledChanged) continue;
 

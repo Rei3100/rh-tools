@@ -28,7 +28,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public Func<Task>? RefreshAction { get; set; }
+    public Func<Task>? ForceRefreshAction { get; set; }
     public Func<IReadOnlyList<string>, Task>? RefreshSelectedAction { get; set; }
+
+    public ObservableCollection<string> UpdateReportLines { get; } = new();
 
     public ObservableCollection<GameInfo> Games { get; } = new();
     public ObservableCollection<ModLoadEntry> Entries { get; } = new();
@@ -125,6 +128,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             var restored = Games.FirstOrDefault(g => g.AppId == prevId);
             if (restored is not null) SelectedGame = restored;
+        }
+    }
+
+    public void ApplyMetadataToRow(string modId, string jaName, string jaDesc, string? category, string? author)
+    {
+        for (int i = 0; i < Entries.Count; i++)
+        {
+            var e = Entries[i];
+            if (!string.Equals(e.ModId, modId, StringComparison.OrdinalIgnoreCase)) continue;
+            var newInfo = e.Info is null
+                ? null
+                : e.Info with { ModName = jaName, ModDescription = jaDesc, ModAuthor = author ?? e.Info.ModAuthor };
+            Entries[i] = e with { Info = newInfo, Category = category ?? e.Category };
+            break;
         }
     }
 

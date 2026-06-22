@@ -62,6 +62,19 @@ public partial class ModListView : UserControl
             await action();
     }
 
+    // 更新レポートパネルを手動で閉じる
+    private void ReportClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+            vm.UpdateReportLines.Clear();
+    }
+
+    private async void ForceRefreshButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm && !vm.IsUpdating && vm.ForceRefreshAction is { } action)
+            await action();
+    }
+
     // URL ハイパーリンク（既存の動作を維持）
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
     {

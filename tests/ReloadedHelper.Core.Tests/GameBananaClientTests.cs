@@ -4,7 +4,7 @@ public class GameBananaClientTests
 {
     [Theory]
     [InlineData("https://gamebanana.com/mods/123456", "123456")]
-    [InlineData("https://gamebanana.com/dl/123456",   "123456")]
+    [InlineData("https://gamebanana.com/dl/123456", "123456")]
     [InlineData("https://gamebanana.com/mods/123456?some=param", "123456")]
     [InlineData("https://example.com/other", null)]
     [InlineData(null, null)]
@@ -15,21 +15,28 @@ public class GameBananaClientTests
     }
 
     [Fact]
-    public async Task FetchAsync_parses_profile_page_response()
+    public async Task FetchAsync_parses_apiv11_object_response()
     {
-        // ProfilePage?fields=name,text,Category().name,Game().id → 順序通りの配列
-        var json = """["CRI FileSystem V2 Hook","Hooks the CRI filesystem.","Sound","8809"]""";
+        var json = """
+        {"_sName":"Persona 5 2016 Beta Lavenza",
+         "_sText":"This mod restores Lavenza's old beta model.<br><br>Warning",
+         "_aCategory":{"_sName":"Characters"},
+         "_aGame":{"_idRow":16951},
+         "_aSubmitter":{"_sName":"lonelycrow"}}
+        """;
         var handler = new FakeHttpMessageHandler(json);
         var client = new GameBananaClient(new System.Net.Http.HttpClient(handler));
 
-        var result = await client.FetchAsync("123456");
+        var result = await client.FetchAsync("491359");
 
         Assert.NotNull(result);
-        Assert.Equal("CRI FileSystem V2 Hook", result!.Name);
-        Assert.Equal("Hooks the CRI filesystem.", result.Text);
-        Assert.Equal("Sound", result.Category);
-        Assert.Equal("8809", result.GameId);
-        Assert.Contains("api.gamebanana.com/apiv11/Mod/123456/ProfilePage", handler.LastRequestUri);
+        Assert.Equal("Persona 5 2016 Beta Lavenza", result!.Name);
+        Assert.StartsWith("This mod restores", result.Text);
+        Assert.Equal("Characters", result.Category);
+        Assert.Equal("16951", result.GameId);
+        Assert.Equal("lonelycrow", result.Author);
+        Assert.Contains("gamebanana.com/apiv11/Mod/491359", handler.LastRequestUri);
+        Assert.DoesNotContain("api.gamebanana.com", handler.LastRequestUri);
     }
 
     [Fact]
@@ -46,8 +53,7 @@ public class GameBananaClientTests
     [Fact]
     public async Task SearchAsync_returns_best_match_above_80_percent()
     {
-        // 完全一致 → 採用
-        var json = """[{"_idRow": 123456, "_sName": "CRI FileSystem V2 Hook"}]""";
+        var json = """{"_aRecords":[{"_idRow":123456,"_sName":"CRI FileSystem V2 Hook"}]}""";
         var handler = new FakeHttpMessageHandler(json);
         var client = new GameBananaClient(new System.Net.Http.HttpClient(handler));
 
@@ -55,29 +61,24 @@ public class GameBananaClientTests
 
         Assert.NotNull(result);
         Assert.Equal("123456", result!.Value.GbId);
-        Assert.Equal("8809", result!.Value.GbGameId);
+        Assert.Equal("8809", result.Value.GbGameId);
+        Assert.Contains("_sSearchString=", handler.LastRequestUri);
+        Assert.Contains("_idGameRow=8809", handler.LastRequestUri);
     }
 
     [Fact]
     public async Task SearchAsync_returns_null_when_no_match_above_threshold()
     {
-        var json = """[{"_idRow": 1, "_sName": "Completely Different Mod"}]""";
-        var handler = new FakeHttpMessageHandler(json);
-        var client = new GameBananaClient(new System.Net.Http.HttpClient(handler));
-
-        var result = await client.SearchAsync("My Unique Mod Name", "8809");
-
-        Assert.Null(result);
+        var json = """{"_aRecords":[{"_idRow":1,"_sName":"Completely Different Mod"}]}""";
+        var client = new GameBananaClient(new System.Net.Http.HttpClient(new FakeHttpMessageHandler(json)));
+        Assert.Null(await client.SearchAsync("My Unique Mod Name", "8809"));
     }
 
     [Fact]
     public async Task SearchAsync_returns_null_on_empty_results()
     {
-        var handler = new FakeHttpMessageHandler("[]");
-        var client = new GameBananaClient(new System.Net.Http.HttpClient(handler));
-
-        var result = await client.SearchAsync("Any Mod", "8809");
-
-        Assert.Null(result);
+        var json = """{"_aRecords":[]}""";
+        var client = new GameBananaClient(new System.Net.Http.HttpClient(new FakeHttpMessageHandler(json)));
+        Assert.Null(await client.SearchAsync("Any Mod", "8809"));
     }
 }

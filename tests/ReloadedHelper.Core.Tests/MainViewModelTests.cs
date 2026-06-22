@@ -74,4 +74,34 @@ public class MainViewModelTests
         Assert.Contains("UpdateProgress", changed);
         Assert.Equal("更新中 1/10 件...", vm.UpdateProgress);
     }
+
+    private static ModInfo Info(string id, string name) =>
+        new(id, name, "old", "1.0", "olddesc", Array.Empty<string>(), Array.Empty<string>(),
+            Array.Empty<string>(), new[] { "p5r.exe" }, null, null, null, null, "C:\\x");
+
+    [Fact]
+    public void ApplyMetadataToRow_replaces_matching_entry()
+    {
+        var vm = new MainViewModel();
+        vm.Entries.Add(new ModLoadEntry(1, "m1", Info("m1", "Old"), true));
+        vm.Entries.Add(new ModLoadEntry(2, "m2", Info("m2", "Keep"), true));
+
+        vm.ApplyMetadataToRow("m1", "新名", "新説明", "Skin", "author");
+
+        var e = vm.Entries.First(x => x.ModId == "m1");
+        Assert.Equal("新名", e.Info!.ModName);
+        Assert.Equal("新説明", e.Info.ModDescription);
+        Assert.Equal("author", e.Info.ModAuthor);
+        Assert.Equal("Skin", e.Category);
+        Assert.Equal("Keep", vm.Entries.First(x => x.ModId == "m2").Info!.ModName); // 無関係は不変
+    }
+
+    [Fact]
+    public void ApplyMetadataToRow_ignores_unknown_id()
+    {
+        var vm = new MainViewModel();
+        vm.Entries.Add(new ModLoadEntry(1, "m1", Info("m1", "Old"), true));
+        vm.ApplyMetadataToRow("nope", "x", "y", null, null); // 例外を投げない
+        Assert.Single(vm.Entries);
+    }
 }

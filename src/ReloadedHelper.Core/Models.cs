@@ -66,3 +66,5 @@ public sealed record ModLoadEntry(
             _ => Category,
         };
 }
+
+public sealed record GameBananaModInfo(string Name, string Text, string? Category, string GameId, string? Author);

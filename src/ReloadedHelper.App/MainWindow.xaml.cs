@@ -10,15 +10,15 @@ public partial class MainWindow : Window
 
     public MainWindow(ShellViewModel shell)
     {
-        _shell     = shell;
+        _shell = shell;
         DataContext = shell;
         InitializeComponent();
     }
 
     // ── サイドナビ ──
-    private void NavModList_Click(object sender, RoutedEventArgs e)  => _shell.ShowModList();
+    private void NavModList_Click(object sender, RoutedEventArgs e) => _shell.ShowModList();
     private void NavSettings_Click(object sender, RoutedEventArgs e) => _shell.ShowSettings();
-    private void NavHelp_Click(object sender, RoutedEventArgs e)     => _shell.ShowHelp();
+    private void NavHelp_Click(object sender, RoutedEventArgs e) => _shell.ShowHelp();
 
     // ── オーバーレイを閉じる ──
     private void CloseOverlay_Click(object sender, RoutedEventArgs e)
@@ -43,7 +43,7 @@ public partial class MainWindow : Window
     {
         if (WindowState == WindowState.Minimized && _shell.SettingsVm.MinimizeToTray)
         {
-            ShowInTaskbar       = false;
+            ShowInTaskbar = false;
             TrayIcon.Visibility = Visibility.Visible;
             Hide();
         }
@@ -52,8 +52,8 @@ public partial class MainWindow : Window
     private void RestoreWindow()
     {
         Show();
-        WindowState         = WindowState.Maximized;
-        ShowInTaskbar       = true;
+        WindowState = WindowState.Maximized;
+        ShowInTaskbar = true;
         Activate();
         TrayIcon.Visibility = Visibility.Collapsed;
     }

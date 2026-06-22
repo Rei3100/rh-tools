@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace ReloadedHelper.Core;
 
-public sealed class TranslationService(HttpClient http, TimeSpan? requestDelay = null)
+public sealed class TranslationService(HttpClient http, TimeSpan? requestDelay = null) : ITranslator
 {
     private readonly TimeSpan _delay = requestDelay ?? TimeSpan.FromMilliseconds(100);
 
