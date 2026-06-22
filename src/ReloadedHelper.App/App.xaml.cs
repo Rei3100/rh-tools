@@ -125,11 +125,9 @@ public partial class App : Application
 
             Current.Dispatcher.Invoke(() =>
             {
-                MessageBox.Show(
-                    $"v{latestVer} に更新します。アプリを再起動します。",
+                ThemedDialog.Show(Current.MainWindow,
                     "rh-tools 更新",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    $"v{latestVer} に更新します。アプリを再起動します。");
                 Current.Shutdown();
             });
         }
