@@ -64,3 +64,9 @@ SectionA Task A10: complete (commits 6251f68..a9fd1cb, review clean — Minor: n
 SectionA Task A11: complete (commits a9fd1cb..433257d, review clean — Minor: no dedicated null-fallback test)
 SectionA Task A12: complete (commits 433257d..faae538, review clean — Minor: report panel hides when IsUpdating=false (user cant read final report); results var scope)
 SectionA Final review: READY TO MERGE (no Critical/Important). A12 visibility fix applied (7cd04f1, review Approved). Deferred Minors: A2 indent, A5 Regex static, A7 magic 0.7/dead guard.
+SectionB Task B1: complete (commits d1f2a01..feb5f83, review clean — Minor: redundant Separator Height/Background setters)
+SectionB Task B2: complete (commits feb5f83..8596e52, review clean)
+SectionB Task B3: complete (commits 8596e52..8d697d0, review clean)
+SectionB Task B4: complete (commits 8d697d0..612388a, review approved — Minor: CaptionCloseButtonStyle hover fg/bg split across Style.Triggers+ControlTemplate.Triggers (works, readability); redundant ButtonState guard)
+SectionB Task B5: complete (commits 612388a..9aadcc1, review clean)
+SectionB caption fix: complete (c2f17fd — caption glyphs use explicit TextBlock w/ local Segoe MDL2 to beat implicit TextBlock style). Final review READY TO MERGE. Visual verification passed (dark titlebar+glyphs, dark context menu, ThemedDialog).

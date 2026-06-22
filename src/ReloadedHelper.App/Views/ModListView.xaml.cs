@@ -7,6 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Navigation;
 using ReloadedHelper.Core;
+using ReloadedHelper.App;
 
 namespace ReloadedHelper.App.Views;
 
@@ -137,18 +138,15 @@ public partial class ModListView : UserControl
 
         if (entry.Info is null)
         {
-            MessageBox.Show("MOD フォルダが見つかりません。", "削除エラー",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            ThemedDialog.Show(Window.GetWindow(this), "削除エラー", "MOD フォルダが見つかりません。");
             return;
         }
 
-        var confirm = MessageBox.Show(
+        var confirm = ThemedDialog.Show(Window.GetWindow(this), "MOD 削除の確認",
             $"「{entry.DisplayName}」のフォルダをゴミ箱に移動します。よろしいですか？\n\n{entry.Info.FolderPath}",
-            "MOD 削除の確認",
-            MessageBoxButton.OKCancel,
-            MessageBoxImage.Warning);
+            okText: "ゴミ箱へ移動", cancelText: "キャンセル");
 
-        if (confirm != MessageBoxResult.OK) return;
+        if (!confirm) return;
 
         foreach (var game in vm.Games)
         {
@@ -164,8 +162,7 @@ public partial class ModListView : UserControl
         var success = RecycleBinHelper.SendToRecycleBin(entry.Info.FolderPath);
         if (!success)
         {
-            MessageBox.Show("ゴミ箱への移動に失敗しました。", "削除エラー",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            ThemedDialog.Show(Window.GetWindow(this), "削除エラー", "ゴミ箱への移動に失敗しました。");
             return;
         }
 
