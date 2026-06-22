@@ -44,4 +44,62 @@ public static class ModConfigStore
         catch (JsonException) { return Array.Empty<ModConfigField>(); }
         catch (IOException) { return Array.Empty<ModConfigField>(); }
     }
+
+    public static void Write(string configPath, IReadOnlyList<ModConfigField> fields)
+    {
+        if (!File.Exists(configPath)) return;
+        var byName = fields.ToDictionary(f => f.Name, StringComparer.Ordinal);
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(configPath));
+            if (doc.RootElement.ValueKind != JsonValueKind.Object) return;
+
+            using var ms = new MemoryStream();
+            using (var w = new Utf8JsonWriter(ms, new JsonWriterOptions
+            {
+                Indented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            }))
+            {
+                w.WriteStartObject();
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    if (byName.TryGetValue(prop.Name, out var f) && IsScalar(prop.Value.ValueKind))
+                    {
+                        w.WritePropertyName(prop.Name);
+                        WriteValue(w, f);
+                    }
+                    else
+                    {
+                        prop.WriteTo(w); // 未対応 or fields 未指定 → 原本保持
+                    }
+                }
+                w.WriteEndObject();
+            }
+            File.WriteAllBytes(configPath, ms.ToArray());
+        }
+        catch (JsonException) { }
+        catch (IOException) { }
+    }
+
+    private static bool IsScalar(JsonValueKind k) =>
+        k is JsonValueKind.True or JsonValueKind.False or JsonValueKind.Number or JsonValueKind.String;
+
+    private static void WriteValue(Utf8JsonWriter w, ModConfigField f)
+    {
+        switch (f.Kind)
+        {
+            case ConfigFieldKind.Bool:
+                w.WriteBooleanValue(bool.TryParse(f.Value, out var b) && b);
+                break;
+            case ConfigFieldKind.Number:
+                if (long.TryParse(f.Value, out var l)) w.WriteNumberValue(l);
+                else if (double.TryParse(f.Value, System.Globalization.CultureInfo.InvariantCulture, out var d)) w.WriteNumberValue(d);
+                else w.WriteNumberValue(0);
+                break;
+            default:
+                w.WriteStringValue(f.Value);
+                break;
+        }
+    }
 }
