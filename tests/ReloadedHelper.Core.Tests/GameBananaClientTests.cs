@@ -53,8 +53,7 @@ public class GameBananaClientTests
     [Fact]
     public async Task SearchAsync_returns_best_match_above_80_percent()
     {
-        // 完全一致 → 採用
-        var json = """[{"_idRow": 123456, "_sName": "CRI FileSystem V2 Hook"}]""";
+        var json = """{"_aRecords":[{"_idRow":123456,"_sName":"CRI FileSystem V2 Hook"}]}""";
         var handler = new FakeHttpMessageHandler(json);
         var client = new GameBananaClient(new System.Net.Http.HttpClient(handler));
 
@@ -62,29 +61,24 @@ public class GameBananaClientTests
 
         Assert.NotNull(result);
         Assert.Equal("123456", result!.Value.GbId);
-        Assert.Equal("8809", result!.Value.GbGameId);
+        Assert.Equal("8809", result.Value.GbGameId);
+        Assert.Contains("_sSearchString=", handler.LastRequestUri);
+        Assert.Contains("_idGameRow=8809", handler.LastRequestUri);
     }
 
     [Fact]
     public async Task SearchAsync_returns_null_when_no_match_above_threshold()
     {
-        var json = """[{"_idRow": 1, "_sName": "Completely Different Mod"}]""";
-        var handler = new FakeHttpMessageHandler(json);
-        var client = new GameBananaClient(new System.Net.Http.HttpClient(handler));
-
-        var result = await client.SearchAsync("My Unique Mod Name", "8809");
-
-        Assert.Null(result);
+        var json = """{"_aRecords":[{"_idRow":1,"_sName":"Completely Different Mod"}]}""";
+        var client = new GameBananaClient(new System.Net.Http.HttpClient(new FakeHttpMessageHandler(json)));
+        Assert.Null(await client.SearchAsync("My Unique Mod Name", "8809"));
     }
 
     [Fact]
     public async Task SearchAsync_returns_null_on_empty_results()
     {
-        var handler = new FakeHttpMessageHandler("[]");
-        var client = new GameBananaClient(new System.Net.Http.HttpClient(handler));
-
-        var result = await client.SearchAsync("Any Mod", "8809");
-
-        Assert.Null(result);
+        var json = """{"_aRecords":[]}""";
+        var client = new GameBananaClient(new System.Net.Http.HttpClient(new FakeHttpMessageHandler(json)));
+        Assert.Null(await client.SearchAsync("Any Mod", "8809"));
     }
 }

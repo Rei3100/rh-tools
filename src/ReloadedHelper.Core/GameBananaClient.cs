@@ -34,8 +34,8 @@ public sealed class GameBananaClient(HttpClient http)
         string modName, string gbGameId, CancellationToken ct = default)
     {
         var q = Uri.EscapeDataString(modName);
-        var url = $"https://api.gamebanana.com/apiv11/Util/Search/Results" +
-                  $"?search_query={q}&itemtype=Mod&gameid={gbGameId}&page=1&nperpage=5";
+        var url = $"https://gamebanana.com/apiv11/Util/Search/Results" +
+                  $"?_sSearchString={q}&_idGameRow={gbGameId}&_sModelName=Mod&_nPage=1";
         try
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -76,30 +76,23 @@ public sealed class GameBananaClient(HttpClient http)
     private static (string GbId, string GbGameId)? ParseSearchResult(
         string json, string modName, string gbGameId)
     {
-        // 期待形式: [{"_idRow": 123, "_sName": "..."}, ...]
         try
         {
             using var doc = JsonDocument.Parse(json);
-            var arr = doc.RootElement;
-            if (arr.ValueKind != JsonValueKind.Array) return null;
+            if (!doc.RootElement.TryGetProperty("_aRecords", out var arr) ||
+                arr.ValueKind != JsonValueKind.Array) return null;
 
             string? bestId = null;
             double bestScore = 0;
-
             foreach (var item in arr.EnumerateArray())
             {
                 if (!item.TryGetProperty("_idRow", out var idProp)) continue;
                 if (!item.TryGetProperty("_sName", out var nameProp)) continue;
-
                 var id = idProp.ValueKind == JsonValueKind.Number
-                    ? idProp.GetInt64().ToString()
-                    : idProp.GetString() ?? "";
-                var name = nameProp.GetString() ?? "";
-                var score = Similarity(modName, name);
-
+                    ? idProp.GetInt64().ToString() : idProp.GetString() ?? "";
+                var score = Similarity(modName, nameProp.GetString() ?? "");
                 if (score > bestScore) { bestScore = score; bestId = id; }
             }
-
             if (bestScore >= SimilarityThreshold && bestId is not null)
                 return (bestId, gbGameId);
             return null;
