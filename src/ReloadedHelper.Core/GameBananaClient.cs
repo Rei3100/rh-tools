@@ -4,10 +4,12 @@ using System.Text.RegularExpressions;
 
 namespace ReloadedHelper.Core;
 
-public sealed class GameBananaClient(HttpClient http)
+public sealed class GameBananaClient(HttpClient http) : IGameBananaSource
 {
     private static readonly TimeSpan ApiTimeout = TimeSpan.FromSeconds(3);
     private const double SimilarityThreshold = 0.80;
+
+    public string? ExtractId(string? url) => ExtractIdFromUrl(url);
 
     public static string? ExtractIdFromUrl(string? projectUrl)
     {
