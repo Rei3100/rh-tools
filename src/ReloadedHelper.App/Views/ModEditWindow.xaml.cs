@@ -7,13 +7,13 @@ namespace ReloadedHelper.App.Views;
 
 public partial class ModEditWindow : Window
 {
-    private readonly ModLoadEntry  _entry;
+    private readonly ModLoadEntry _entry;
     private readonly MainViewModel _vm;
 
     public ModEditWindow(ModLoadEntry entry, MainViewModel vm)
     {
         _entry = entry;
-        _vm    = vm;
+        _vm = vm;
         InitializeComponent();
         LoadFields();
     }
@@ -23,11 +23,11 @@ public partial class ModEditWindow : Window
         var ud = UserDataStore.Load(UserDataStore.DefaultPath);
         ud.Mods.TryGetValue(_entry.ModId, out var data);
 
-        TbName.Text        = data?.TranslatedName        ?? _entry.Info?.ModName        ?? "";
+        TbName.Text = data?.TranslatedName ?? _entry.Info?.ModName ?? "";
         TbDescription.Text = data?.TranslatedDescription ?? _entry.Info?.ModDescription ?? "";
-        TbUrl.Text         = data?.UrlOverride           ?? _entry.Info?.ProjectUrl      ?? "";
-        TbNotes.Text       = data?.Notes                 ?? "";
-        TbGbId.Text        = data?.GameBananaId          ?? "";
+        TbUrl.Text = data?.UrlOverride ?? _entry.Info?.ProjectUrl ?? "";
+        TbNotes.Text = data?.Notes ?? "";
+        TbGbId.Text = data?.GameBananaId ?? "";
 
         // フレームワーク MOD は削除禁止
         BtnDelete.Visibility = _entry.IsLibrary ? Visibility.Collapsed : Visibility.Visible;
@@ -39,11 +39,12 @@ public partial class ModEditWindow : Window
         if (!ud.Mods.TryGetValue(_entry.ModId, out var data))
             data = new ModUserData();
 
-        data.TranslatedName        = TbName.Text.Trim();
+        data.TranslatedName = TbName.Text.Trim();
         data.TranslatedDescription = TbDescription.Text.Trim();
-        data.UrlOverride           = TbUrl.Text.Trim();
-        data.Notes                 = TbNotes.Text.Trim();
-        data.GameBananaId          = TbGbId.Text.Trim();
+        data.UrlOverride = TbUrl.Text.Trim();
+        data.Notes = TbNotes.Text.Trim();
+        var gbId = TbGbId.Text.Trim();
+        data.GameBananaId = string.IsNullOrEmpty(gbId) ? null : gbId;
 
         ud.Mods[_entry.ModId] = data;
         UserDataStore.Save(UserDataStore.DefaultPath, ud);

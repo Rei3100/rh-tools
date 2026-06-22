@@ -1,4 +1,5 @@
 // src/ReloadedHelper.App/Views/ModListView.xaml.cs
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -117,8 +118,45 @@ public partial class ModListView : UserControl
 
     private void DeleteMenu_Click(object sender, RoutedEventArgs e)
     {
-        if (GetContextMenuEntry(sender) is { } entry)
-            OpenEditWindow(entry);
+        if (GetContextMenuEntry(sender) is not { } entry) return;
+        if (entry.IsLibrary) return;
+        if (DataContext is not MainViewModel vm) return;
+
+        if (entry.Info is null)
+        {
+            MessageBox.Show("MOD フォルダが見つかりません。", "削除エラー",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var confirm = MessageBox.Show(
+            $"「{entry.DisplayName}」のフォルダをゴミ箱に移動します。よろしいですか？\n\n{entry.Info.FolderPath}",
+            "MOD 削除の確認",
+            MessageBoxButton.OKCancel,
+            MessageBoxImage.Warning);
+
+        if (confirm != MessageBoxResult.OK) return;
+
+        foreach (var game in vm.Games)
+        {
+            var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
+            if (File.Exists(configPath))
+                AppConfigWriter.RemoveMod(configPath, game.AppId, entry.ModId);
+        }
+
+        var ud = UserDataStore.Load(UserDataStore.DefaultPath);
+        ud.Mods.Remove(entry.ModId);
+        UserDataStore.Save(UserDataStore.DefaultPath, ud);
+
+        var success = RecycleBinHelper.SendToRecycleBin(entry.Info.FolderPath);
+        if (!success)
+        {
+            MessageBox.Show("ゴミ箱への移動に失敗しました。", "削除エラー",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        vm.Reload();
     }
 
     private void OpenEditWindow(ModLoadEntry entry)
