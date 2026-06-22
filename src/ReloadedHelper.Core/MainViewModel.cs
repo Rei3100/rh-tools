@@ -128,6 +128,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public void ApplyMetadataToRow(string modId, string jaName, string jaDesc, string? category, string? author)
+    {
+        for (int i = 0; i < Entries.Count; i++)
+        {
+            var e = Entries[i];
+            if (!string.Equals(e.ModId, modId, StringComparison.OrdinalIgnoreCase)) continue;
+            var newInfo = e.Info is null
+                ? null
+                : e.Info with { ModName = jaName, ModDescription = jaDesc, ModAuthor = author ?? e.Info.ModAuthor };
+            Entries[i] = e with { Info = newInfo, Category = category ?? e.Category };
+            break;
+        }
+    }
+
     public void ToggleEnabled(ModLoadEntry entry)
     {
         if (entry.IsLibrary) return;  // フレームワーク MOD はトグル不可
