@@ -55,7 +55,7 @@ public class LoadOrderTests
         };
         var game = new GameInfo("p5r.exe", "P5R", "", null,
             EnabledMods: new[] { "a" },
-            SortedMods:  new[] { "a" },
+            SortedMods: new[] { "a" },
             FolderPath: @"C:\Apps\p5r.exe");
         var userData = new UserDataFile();
         userData.Mods["a"] = new ModUserData { Category = "Sound" };
@@ -72,7 +72,7 @@ public class LoadOrderTests
         var catalog = new Dictionary<string, ModInfo> { ["a"] = Mod("a", "Alpha") };
         var game = new GameInfo("p5r.exe", "P5R", "", null,
             EnabledMods: new[] { "a" },
-            SortedMods:  new[] { "a" },
+            SortedMods: new[] { "a" },
             FolderPath: @"C:\Apps\p5r.exe");
 
         var entries = LoadOrderBuilder.Build(game, catalog);

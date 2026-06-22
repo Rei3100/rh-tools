@@ -7,9 +7,9 @@ namespace ReloadedHelper.App;
 
 public sealed class ShellViewModel : INotifyPropertyChanged
 {
-    public MainViewModel   ModListVm  { get; }
+    public MainViewModel ModListVm { get; }
     public SettingsViewModel SettingsVm { get; }
-    public HelpViewModel   HelpVm     { get; } = new();
+    public HelpViewModel HelpVm { get; } = new();
 
     private object _currentView;
     public object CurrentView
@@ -28,9 +28,9 @@ public sealed class ShellViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool IsModListActive  => CurrentView == ModListVm;
+    public bool IsModListActive => CurrentView == ModListVm;
     public bool IsSettingsActive => CurrentView == SettingsVm;
-    public bool IsHelpActive     => CurrentView == HelpVm;
+    public bool IsHelpActive => CurrentView == HelpVm;
 
     public bool IsOverlayVisible => IsSettingsActive || IsHelpActive;
 
@@ -41,14 +41,14 @@ public sealed class ShellViewModel : INotifyPropertyChanged
 
     public ShellViewModel(MainViewModel modListVm, SettingsViewModel settingsVm)
     {
-        ModListVm  = modListVm;
+        ModListVm = modListVm;
         SettingsVm = settingsVm;
         _currentView = modListVm;
     }
 
-    public void ShowModList()  => CurrentView = ModListVm;
+    public void ShowModList() => CurrentView = ModListVm;
     public void ShowSettings() => CurrentView = SettingsVm;
-    public void ShowHelp()     => CurrentView = HelpVm;
+    public void ShowHelp() => CurrentView = HelpVm;
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify([CallerMemberName] string? n = null) =>

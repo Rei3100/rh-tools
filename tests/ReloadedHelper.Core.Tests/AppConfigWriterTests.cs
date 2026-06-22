@@ -68,11 +68,11 @@ public class AppConfigWriterTests : IDisposable
 
         AppConfigWriter.WriteEnabledAndSorted(_tmp, "test.exe",
             newEnabledMods: new[] { "B" },
-            newSortedMods:  new[] { "B", "C", "A" });
+            newSortedMods: new[] { "B", "C", "A" });
 
         var result = AppConfigParser.Parse(File.ReadAllText(_tmp), Path.GetTempPath());
-        Assert.Equal(new[] { "B" },          result.EnabledMods);
+        Assert.Equal(new[] { "B" }, result.EnabledMods);
         Assert.Equal(new[] { "B", "C", "A" }, result.SortedMods);
-        Assert.Equal("TestGame",              result.AppName); // other fields preserved
+        Assert.Equal("TestGame", result.AppName); // other fields preserved
     }
 }

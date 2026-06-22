@@ -57,10 +57,10 @@ public sealed class GameBananaClient(HttpClient http)
             var arr = doc.RootElement;
             if (arr.ValueKind != JsonValueKind.Array || arr.GetArrayLength() < 4) return null;
 
-            var name     = arr[0].GetString() ?? "";
-            var text     = arr[1].GetString() ?? "";
+            var name = arr[0].GetString() ?? "";
+            var text = arr[1].GetString() ?? "";
             var category = arr[2].ValueKind == JsonValueKind.String ? arr[2].GetString() : null;
-            var gameId   = arr[3].ValueKind == JsonValueKind.String
+            var gameId = arr[3].ValueKind == JsonValueKind.String
                 ? arr[3].GetString() ?? ""
                 : arr[3].GetInt64().ToString();
 
@@ -87,7 +87,7 @@ public sealed class GameBananaClient(HttpClient http)
                 if (!item.TryGetProperty("_idRow", out var idProp)) continue;
                 if (!item.TryGetProperty("_sName", out var nameProp)) continue;
 
-                var id   = idProp.ValueKind == JsonValueKind.Number
+                var id = idProp.ValueKind == JsonValueKind.Number
                     ? idProp.GetInt64().ToString()
                     : idProp.GetString() ?? "";
                 var name = nameProp.GetString() ?? "";

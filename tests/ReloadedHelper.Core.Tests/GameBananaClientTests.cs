@@ -4,7 +4,7 @@ public class GameBananaClientTests
 {
     [Theory]
     [InlineData("https://gamebanana.com/mods/123456", "123456")]
-    [InlineData("https://gamebanana.com/dl/123456",   "123456")]
+    [InlineData("https://gamebanana.com/dl/123456", "123456")]
     [InlineData("https://gamebanana.com/mods/123456?some=param", "123456")]
     [InlineData("https://example.com/other", null)]
     [InlineData(null, null)]

@@ -35,11 +35,11 @@ public class ModConfigUpdaterTests
             var written = File.ReadAllText(Path.Combine(dir, "ModConfig.json"));
             using var doc = JsonDocument.Parse(written);
             var root = doc.RootElement;
-            Assert.Equal("テストMOD",   root.GetProperty("ModName").GetString());
-            Assert.Equal("日本語説明",   root.GetProperty("ModDescription").GetString());
-            Assert.Equal("mod.test",    root.GetProperty("ModId").GetString());
-            Assert.Equal("Author",      root.GetProperty("ModAuthor").GetString());
-            Assert.Equal("1.0.0",       root.GetProperty("ModVersion").GetString());
+            Assert.Equal("テストMOD", root.GetProperty("ModName").GetString());
+            Assert.Equal("日本語説明", root.GetProperty("ModDescription").GetString());
+            Assert.Equal("mod.test", root.GetProperty("ModId").GetString());
+            Assert.Equal("Author", root.GetProperty("ModAuthor").GetString());
+            Assert.Equal("1.0.0", root.GetProperty("ModVersion").GetString());
         }
         finally { Directory.Delete(dir, true); }
     }
@@ -71,8 +71,8 @@ public class ModConfigUpdaterTests
             var written = File.ReadAllText(Path.Combine(dir, "ModConfig.json"));
             using var doc = JsonDocument.Parse(written);
             Assert.Equal("日本語名前", doc.RootElement.GetProperty("ModName").GetString());
-            Assert.Equal("説明文",    doc.RootElement.GetProperty("ModDescription").GetString());
-            Assert.Equal("x",        doc.RootElement.GetProperty("ModId").GetString());
+            Assert.Equal("説明文", doc.RootElement.GetProperty("ModDescription").GetString());
+            Assert.Equal("x", doc.RootElement.GetProperty("ModId").GetString());
         }
         finally { Directory.Delete(dir, true); }
     }

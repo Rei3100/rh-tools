@@ -295,15 +295,15 @@ public partial class App : Application
                 .Where(id => !enabledGroup.Contains(id, StringComparer.OrdinalIgnoreCase))
                 .ToList();
 
-            var sortedEnabled  = LoadOrderSorter.Sort(enabledGroup,  depMap);
+            var sortedEnabled = LoadOrderSorter.Sort(enabledGroup, depMap);
             var sortedDisabled = LoadOrderSorter.Sort(disabledGroup, depMap);
-            var newSorted  = sortedEnabled.Concat(sortedDisabled).ToList();
+            var newSorted = sortedEnabled.Concat(sortedDisabled).ToList();
             var newEnabled = sortedEnabled.ToList();
 
             var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
             if (!File.Exists(configPath)) continue;
 
-            bool sortChanged    = !newSorted.SequenceEqual(game.SortedMods,  StringComparer.OrdinalIgnoreCase);
+            bool sortChanged = !newSorted.SequenceEqual(game.SortedMods, StringComparer.OrdinalIgnoreCase);
             bool enabledChanged = !newEnabled.SequenceEqual(game.EnabledMods, StringComparer.OrdinalIgnoreCase);
             if (!sortChanged && !enabledChanged) continue;
 
