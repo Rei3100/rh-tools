@@ -21,6 +21,14 @@ public static class LoadOrderOptimizer
         var order = LoadOrderSorter.Sort(currentOrder, dependenciesOf).ToList();
         var reasons = new List<PlacementReason>();
         var unresolved = new List<(string A, string B)>();
+        // 同じMODペアが複数ファイルで競合しても「要確認」は1件だけにする（順不同で同一視）。
+        var seenUnresolved = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        void AddUnresolved(string a, string b)
+        {
+            var (lo, hi) = string.CompareOrdinal(a, b) <= 0 ? (a, b) : (b, a);
+            if (seenUnresolved.Add($"{lo.ToLowerInvariant()}|{hi.ToLowerInvariant()}"))
+                unresolved.Add((a, b));
+        }
 
         // 依存制約: dep は dependent より前。入れ替えがこれを壊さないか確認用。
         bool DependsOn(string mod, string maybeDep)
@@ -39,7 +47,7 @@ public static class LoadOrderOptimizer
                 ? prefs.GetWinner(appId, c.ModIds[0], c.ModIds[1]) ?? DecideByRole(c.ModIds, rolesByMod)
                 : DecideByRole(c.ModIds, rolesByMod);
 
-            if (winner is null) { unresolved.Add((repA, repB)); continue; }
+            if (winner is null) { AddUnresolved(repA, repB); continue; }
 
             var losers = c.ModIds
                 .Where(m => !string.Equals(m, winner, StringComparison.OrdinalIgnoreCase))
@@ -49,7 +57,7 @@ public static class LoadOrderOptimizer
             if (wi < 0) continue;
 
             // 勝者が壊す依存（敗者が勝者に依存）があるなら自動では動かさない
-            if (losers.Any(l => DependsOn(l, winner))) { unresolved.Add((repA, repB)); continue; }
+            if (losers.Any(l => DependsOn(l, winner))) { AddUnresolved(repA, repB); continue; }
 
             int maxLoser = losers.Select(l => IndexOf(order, l)).DefaultIfEmpty(-1).Max();
             if (maxLoser < 0 || wi > maxLoser) continue; // すでに全敗者より後ろ＝OK
