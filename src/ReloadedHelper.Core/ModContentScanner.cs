@@ -7,7 +7,15 @@ public sealed record ModOverrides(string ModId, IReadOnlyList<string> Paths);
 public static class ModContentScanner
 {
     // 拡張ポイント: ゲームファイルを置き換える redirect ルート（相対・小文字比較）
-    private static readonly string[] RedirectRoots = { "P5REssentials/CPK", "FEmulator/AWB" };
+    private static readonly string[] RedirectRoots =
+    {
+        "P5REssentials/CPK",
+        "P5REssentials/MOD",
+        "FEmulator/AWB",
+        "AwbEmulator/AWB",
+        "BGME",
+        "Costumes",
+    };
 
     public static ModOverrides Scan(string modFolderPath, string modId)
     {

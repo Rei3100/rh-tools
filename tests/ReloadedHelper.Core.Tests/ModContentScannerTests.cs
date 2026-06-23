@@ -46,4 +46,19 @@ public class ModContentScannerTests
     {
         Assert.Empty(ModContentScanner.Scan(Path.Combine(Path.GetTempPath(), "nope-xyz"), "m3").Paths);
     }
+
+    [Fact]
+    public void Scan_collects_bgme_and_costumes_paths()
+    {
+        var dir = MakeMod(
+            ("BGME/Persona", "music.pme"),
+            ("Costumes/Joker/01", "model.gmd"));
+        try
+        {
+            var paths = ModContentScanner.Scan(dir, "m4").Paths;
+            Assert.Contains("bgme/persona/music.pme", paths);
+            Assert.Contains("costumes/joker/01/model.gmd", paths);
+        }
+        finally { Directory.Delete(dir, true); }
+    }
 }
