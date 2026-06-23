@@ -13,9 +13,9 @@ public class LoadOrderOptimizerTests
         => new(System.IO.Directory.CreateTempSubdirectory().FullName);
 
     [Fact]
-    public void RoleRule_VisualWinsOverBase_MovedAfterLoser()
+    public void Layering_PlacesVisualAfterBase_NoMoveNeeded()
     {
-        // 現状順: visual が先(=負けてる)。base が後(=勝ってる)。Visual を勝たせたい→ visual を後へ。
+        // 層整列で base(rank1) が先、visual(rank3) が後ろになる。衝突移動は不要。
         var order = new[] { "visual", "base" };
         var conflicts = new[] { new FileConflict("file:hair.bin", new[] { "visual", "base" }, "base") };
         var roles = Roles(("visual", ModRole.VisualOverride), ("base", ModRole.BaseLayer));
@@ -24,7 +24,8 @@ public class LoadOrderOptimizerTests
 
         Assert.True(res.Order.ToList().IndexOf("visual") > res.Order.ToList().IndexOf("base"));
         Assert.Empty(res.Unresolved);
-        Assert.Single(res.Reasons);
+        Assert.Empty(res.Reasons);                 // 層整列で解決済み＝移動記録なし
+        Assert.Equal(2, res.Placements.Count);     // 全MODに配置理由が付く
     }
 
     [Fact]
@@ -56,9 +57,8 @@ public class LoadOrderOptimizerTests
     }
 
     [Fact]
-    public void ThreeWay_SingleVisualWinner_MovedAfterAll()
+    public void ThreeWay_LayeringPlacesVisualLast()
     {
-        // visual が先頭(=負け)。base2つが後ろ(=勝ってる)。visual を全員より後ろへ。
         var order = new[] { "visual", "base1", "base2" };
         var conflicts = new[]
         {
@@ -75,7 +75,7 @@ public class LoadOrderOptimizerTests
         Assert.True(idx.IndexOf("visual") > idx.IndexOf("base1"));
         Assert.True(idx.IndexOf("visual") > idx.IndexOf("base2"));
         Assert.Empty(res.Unresolved);
-        Assert.Single(res.Reasons);
+        Assert.Empty(res.Reasons);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class LoadOrderOptimizerTests
     [Fact]
     public void ThreeWay_TwoTopRoles_IsUnresolved_NoMove()
     {
-        // visual が2つ＝勝者一意でない → 自動判断せず Unresolved。
+        // v1,v2(rank3) は base(rank1) の後ろへ層整列される。勝者一意でないので衝突は要確認。
         var order = new[] { "v1", "v2", "base" };
         var conflicts = new[]
         {
@@ -112,7 +112,23 @@ public class LoadOrderOptimizerTests
 
         var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, EmptyPrefs());
 
-        Assert.Equal(new[] { "v1", "v2", "base" }, res.Order);
+        Assert.Equal(new[] { "base", "v1", "v2" }, res.Order); // 層整列後の順
         Assert.Single(res.Unresolved);
+    }
+
+    [Fact]
+    public void Placements_UseProvidedRoleReasons()
+    {
+        var order = new[] { "a" };
+        var roles = Roles(("a", ModRole.VisualOverride));
+        var reasons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["a"] = "衣装フォルダがあるため見た目として後方に配置",
+        };
+
+        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps,
+            Array.Empty<FileConflict>(), roles, EmptyPrefs(), reasons);
+
+        Assert.Equal("衣装フォルダがあるため見た目として後方に配置", res.Placements[0].Reason);
     }
 }

@@ -15,7 +15,8 @@ public class AutoSortCoordinatorTests
         var result = new OptimizeResult(
             new[] { "a", "b" },
             new[] { new PlacementReason("a", "b", "msg") },
-            Array.Empty<(string, string)>());
+            Array.Empty<(string, string)>(),
+            Array.Empty<ModPlacement>());
 
         var entry = coord.Apply(AutoSortTrigger.ToggleEnable, result,
             applyOrder: o => calls.Add("apply:" + string.Join(",", o)),
@@ -31,7 +32,8 @@ public class AutoSortCoordinatorTests
     {
         var dir = Directory.CreateTempSubdirectory().FullName;
         var empty = new OptimizeResult(Array.Empty<string>(),
-            Array.Empty<PlacementReason>(), Array.Empty<(string, string)>());
+            Array.Empty<PlacementReason>(), Array.Empty<(string, string)>(),
+            Array.Empty<ModPlacement>());
         var c1 = new AutoSortCoordinator(dir);
         c1.Apply(AutoSortTrigger.Startup, empty, _ => { }, () => { });
 

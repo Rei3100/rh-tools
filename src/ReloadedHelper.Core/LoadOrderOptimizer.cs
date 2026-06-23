@@ -2,10 +2,13 @@ namespace ReloadedHelper.Core;
 
 public sealed record PlacementReason(string MovedModId, string AgainstModId, string Message);
 
+public sealed record ModPlacement(string ModId, int LayerRank, string LayerLabel, string Reason);
+
 public sealed record OptimizeResult(
     IReadOnlyList<string> Order,
     IReadOnlyList<PlacementReason> Reasons,
-    IReadOnlyList<(string A, string B)> Unresolved);
+    IReadOnlyList<(string A, string B)> Unresolved,
+    IReadOnlyList<ModPlacement> Placements);
 
 public static class LoadOrderOptimizer
 {
@@ -15,10 +18,18 @@ public static class LoadOrderOptimizer
         IReadOnlyDictionary<string, IReadOnlyList<string>> dependenciesOf,
         IReadOnlyList<FileConflict> conflicts,
         IReadOnlyDictionary<string, ModRole> rolesByMod,
-        PreferenceStore prefs)
+        PreferenceStore prefs,
+        IReadOnlyDictionary<string, string>? roleReasons = null)
     {
-        // 1. 依存を満たす基準順
-        var order = LoadOrderSorter.Sort(currentOrder, dependenciesOf).ToList();
+        // 0. 役割の層ランクで全MODを安定整列（弱い土台が前、見た目が後ろ）。同層は元順を維持。
+        var layered = currentOrder
+            .Select((id, i) => (id, i, rank: ModLayer.Rank(rolesByMod.GetValueOrDefault(id, ModRole.Unknown))))
+            .OrderBy(x => x.rank).ThenBy(x => x.i)
+            .Select(x => x.id)
+            .ToList();
+
+        // 1. 依存を満たす基準順（層整列を初期順として依存ソート）
+        var order = LoadOrderSorter.Sort(layered, dependenciesOf).ToList();
         var reasons = new List<PlacementReason>();
         var unresolved = new List<(string A, string B)>();
         // 同じMODペアが複数ファイルで競合しても「要確認」は1件だけにする（順不同で同一視）。
@@ -71,7 +82,16 @@ public static class LoadOrderOptimizer
                 $"「{winner}」を{loserLabel}より後ろに配置しました（{winner} の上書きを反映）。"));
         }
 
-        return new OptimizeResult(order, reasons, unresolved);
+        var placements = order.Select(id =>
+        {
+            var role = rolesByMod.GetValueOrDefault(id, ModRole.Unknown);
+            var reason = roleReasons != null && roleReasons.TryGetValue(id, out var r) && !string.IsNullOrWhiteSpace(r)
+                ? r
+                : $"{ModLayer.Label(role)}として配置";
+            return new ModPlacement(id, ModLayer.Rank(role), ModLayer.Label(role), reason);
+        }).ToList();
+
+        return new OptimizeResult(order, reasons, unresolved, placements);
     }
 
     // 競合する全MODのうち、役割ランクが最大で一意なものを勝者に。
