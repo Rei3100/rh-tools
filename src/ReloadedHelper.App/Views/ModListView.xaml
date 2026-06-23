@@ -480,6 +480,23 @@
                                        Foreground="{DynamicResource TextDetailBrush}"/>
                         </StackPanel>
 
+                        <!-- 自動並び替えの配置理由（PlacementReason が null のとき非表示） -->
+                        <TextBlock Text="{Binding PlacementReason}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,6"
+                                   FontSize="{DynamicResource FontSizeDetailBody}"
+                                   Foreground="{DynamicResource TextDetailBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PlacementReason}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
                         <!-- URL（null / 空のとき非表示） -->
                         <TextBlock Margin="0,0,0,10">
                             <TextBlock.Style>
