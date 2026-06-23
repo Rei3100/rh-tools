@@ -18,6 +18,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly AutoSortCoordinator _coordinator;
     private readonly PreferenceStore _prefs;
     private bool _inReload;
+    private IReadOnlyDictionary<string, string> _lastPlacementReasons =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public AutoSortCoordinator Coordinator => _coordinator;
 
@@ -218,13 +220,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!File.Exists(configPath)) return;
 
         var diagResult = GameDiagnostics.Run(game, _catalog);
-        var roles = BuildRoles(_allEntries, _catalog);
+        var decisions = BuildRoleDecisions(_allEntries, _catalog);
+        var roles = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Role, StringComparer.OrdinalIgnoreCase);
+        var roleReasons = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Reason, StringComparer.OrdinalIgnoreCase);
         var depMap = _catalog.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<string>)kv.Value.Dependencies,
             StringComparer.OrdinalIgnoreCase);
 
-        var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts, roles, _prefs);
+        var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts, roles, _prefs, roleReasons);
 
         // 実際に順序が変わった時だけ書き込み・バックアップ・履歴を残す。
         // （変わらないのに毎回「変更なし」履歴を量産しない）
@@ -238,6 +242,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             backup: () => LoadOrderBackupService.Backup(configPath, appId));
 
         // ファイルを書き直したので UI に反映（Reload() は再帰ループになるため使わない）
+        _lastPlacementReasons = result.Placements.ToDictionary(
+            p => p.ModId, p => p.Reason, StringComparer.OrdinalIgnoreCase);
         RebuildEntries();
     }
 
@@ -263,25 +269,37 @@ public sealed class MainViewModel : INotifyPropertyChanged
         return learned;
     }
 
-    internal static IReadOnlyDictionary<string, ModRole> BuildRoles(
+    internal static IReadOnlyDictionary<string, RoleDecision> BuildRoleDecisions(
         IReadOnlyList<ModLoadEntry> entries,
         IReadOnlyDictionary<string, ModInfo> catalog)
     {
-        var roles = new Dictionary<string, ModRole>(StringComparer.OrdinalIgnoreCase);
+        var map = new Dictionary<string, RoleDecision>(StringComparer.OrdinalIgnoreCase);
         foreach (var e in entries)
         {
             var info = e.Info ?? (catalog.TryGetValue(e.ModId, out var ci) ? ci : null);
-            if (info is null) { roles[e.ModId] = ModRole.Unknown; continue; }
-            roles[e.ModId] = ModRoleClassifier.Classify(info, e.Category);
+            map[e.ModId] = info is null
+                ? new RoleDecision(ModRole.Unknown, "情報が無いため末尾に配置")
+                : ContentRoleClassifier.Classify(info, e.Category);
         }
-        return roles;
+        return map;
     }
+
+    internal static IReadOnlyDictionary<string, ModRole> BuildRoles(
+        IReadOnlyList<ModLoadEntry> entries,
+        IReadOnlyDictionary<string, ModInfo> catalog)
+        => BuildRoleDecisions(entries, catalog)
+            .ToDictionary(kv => kv.Key, kv => kv.Value.Role, StringComparer.OrdinalIgnoreCase);
 
     private void RebuildEntries()
     {
-        _allEntries = SelectedGame is null
+        var built = SelectedGame is null
             ? Array.Empty<ModLoadEntry>()
             : LoadOrderBuilder.Build(SelectedGame, _catalog, _userData);
+        _allEntries = built
+            .Select(e => _lastPlacementReasons.TryGetValue(e.ModId, out var r)
+                ? e with { PlacementReason = r }
+                : e)
+            .ToList();
         ApplyFilter();
     }
 

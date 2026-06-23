@@ -46,7 +46,8 @@ public sealed record ModLoadEntry(
     ModInfo? Info,
     bool Enabled,
     string? Category = null,
-    bool IsLibrary = false)
+    bool IsLibrary = false,
+    string? PlacementReason = null)
 {
     public string DisplayName =>
         Info is { ModName.Length: > 0 } ? Info.ModName : ModId;
