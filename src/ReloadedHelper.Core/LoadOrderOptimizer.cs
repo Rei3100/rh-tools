@@ -29,45 +29,65 @@ public static class LoadOrderOptimizer
 
         foreach (var c in conflicts)
         {
-            if (c.ModIds.Count != 2) continue; // 多重競合は当面ペア単位のみ自動化
-            var a = c.ModIds[0];
-            var b = c.ModIds[1];
+            if (c.ModIds.Count < 2) continue;
+            // 代表ペア（履歴で「要確認」を可視化するため。多重競合でも握りつぶさない）
+            var repA = c.ModIds[0];
+            var repB = c.ModIds[^1];
 
-            string? winner = prefs.GetWinner(appId, a, b) ?? DecideByRole(a, b, rolesByMod);
-            if (winner is null) { unresolved.Add((a, b)); continue; }
+            // 勝者決定：2件はユーザーの好みを優先、それ以外（多重）は役割で一意なら解決。
+            string? winner = c.ModIds.Count == 2
+                ? prefs.GetWinner(appId, c.ModIds[0], c.ModIds[1]) ?? DecideByRole(c.ModIds, rolesByMod)
+                : DecideByRole(c.ModIds, rolesByMod);
 
-            var loser = string.Equals(winner, a, StringComparison.OrdinalIgnoreCase) ? b : a;
+            if (winner is null) { unresolved.Add((repA, repB)); continue; }
 
-            int wi = IndexOf(order, winner), li = IndexOf(order, loser);
-            if (wi < 0 || li < 0) continue;
-            if (wi > li) continue; // すでに勝者が後ろ＝OK
+            var losers = c.ModIds
+                .Where(m => !string.Equals(m, winner, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
-            // winner を loser の後ろへ移動したいが、依存を壊すなら諦める
-            if (DependsOn(loser, winner)) { unresolved.Add((a, b)); continue; }
+            int wi = IndexOf(order, winner);
+            if (wi < 0) continue;
 
+            // 勝者が壊す依存（敗者が勝者に依存）があるなら自動では動かさない
+            if (losers.Any(l => DependsOn(l, winner))) { unresolved.Add((repA, repB)); continue; }
+
+            int maxLoser = losers.Select(l => IndexOf(order, l)).DefaultIfEmpty(-1).Max();
+            if (maxLoser < 0 || wi > maxLoser) continue; // すでに全敗者より後ろ＝OK
+
+            // 勝者を、全敗者の後ろ（最後の敗者の直後）へ移動
             order.RemoveAt(wi);
-            li = IndexOf(order, loser);
-            order.Insert(li + 1, winner);
-            reasons.Add(new PlacementReason(winner, loser,
-                $"「{winner}」を「{loser}」より後ろに配置しました（{winner} の上書きを反映）。"));
+            maxLoser = losers.Select(l => IndexOf(order, l)).Max();
+            order.Insert(maxLoser + 1, winner);
+            var loserLabel = losers.Count == 1 ? losers[0] : $"{losers.Count}個のMOD";
+            reasons.Add(new PlacementReason(winner, losers[^1],
+                $"「{winner}」を{loserLabel}より後ろに配置しました（{winner} の上書きを反映）。"));
         }
 
         return new OptimizeResult(order, reasons, unresolved);
     }
 
-    private static string? DecideByRole(string a, string b, IReadOnlyDictionary<string, ModRole> roles)
+    // 競合する全MODのうち、役割ランクが最大で一意なものを勝者に。
+    // 同点・最大が Unknown のみ等で決められなければ null（＝要確認）。
+    private static string? DecideByRole(IReadOnlyList<string> mods, IReadOnlyDictionary<string, ModRole> roles)
     {
-        var ra = roles.GetValueOrDefault(a, ModRole.Unknown);
-        var rb = roles.GetValueOrDefault(b, ModRole.Unknown);
         int Rank(ModRole r) => r switch
         {
             ModRole.VisualOverride => 2, // 勝たせたい
             ModRole.BaseLayer => 0,      // 負けてよい
-            _ => 1,
+            _ => 1,                      // Unknown/Music 等
         };
-        if (ra == rb) return null;
-        if (ra == ModRole.Unknown || rb == ModRole.Unknown) return null;
-        return Rank(ra) > Rank(rb) ? a : Rank(rb) > Rank(ra) ? b : null;
+        var ranked = mods
+            .Select(m => (mod: m, role: roles.GetValueOrDefault(m, ModRole.Unknown)))
+            .Select(x => (x.mod, x.role, rank: Rank(x.role)))
+            .OrderByDescending(x => x.rank)
+            .ToList();
+
+        var top = ranked[0];
+        // 最大ランクが Unknown 由来（決め手なし）なら自動判断しない
+        if (top.role is ModRole.Unknown or ModRole.Music) return null;
+        // 最大ランクが複数いる＝勝者一意でない
+        if (ranked.Count(x => x.rank == top.rank) > 1) return null;
+        return top.mod;
     }
 
     private static int IndexOf(List<string> list, string id)

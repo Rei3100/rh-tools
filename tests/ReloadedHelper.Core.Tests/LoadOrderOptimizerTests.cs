@@ -54,4 +54,47 @@ public class LoadOrderOptimizerTests
         Assert.Equal(new[] { "x", "y" }, res.Order);
         Assert.Single(res.Unresolved);
     }
+
+    [Fact]
+    public void ThreeWay_SingleVisualWinner_MovedAfterAll()
+    {
+        // visual が先頭(=負け)。base2つが後ろ(=勝ってる)。visual を全員より後ろへ。
+        var order = new[] { "visual", "base1", "base2" };
+        var conflicts = new[]
+        {
+            new FileConflict("file:hair.bin", new[] { "visual", "base1", "base2" }, "base2"),
+        };
+        var roles = Roles(
+            ("visual", ModRole.VisualOverride),
+            ("base1", ModRole.BaseLayer),
+            ("base2", ModRole.BaseLayer));
+
+        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, EmptyPrefs());
+
+        var idx = res.Order.ToList();
+        Assert.True(idx.IndexOf("visual") > idx.IndexOf("base1"));
+        Assert.True(idx.IndexOf("visual") > idx.IndexOf("base2"));
+        Assert.Empty(res.Unresolved);
+        Assert.Single(res.Reasons);
+    }
+
+    [Fact]
+    public void ThreeWay_TwoTopRoles_IsUnresolved_NoMove()
+    {
+        // visual が2つ＝勝者一意でない → 自動判断せず Unresolved。
+        var order = new[] { "v1", "v2", "base" };
+        var conflicts = new[]
+        {
+            new FileConflict("file:a", new[] { "v1", "v2", "base" }, "base"),
+        };
+        var roles = Roles(
+            ("v1", ModRole.VisualOverride),
+            ("v2", ModRole.VisualOverride),
+            ("base", ModRole.BaseLayer));
+
+        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, EmptyPrefs());
+
+        Assert.Equal(new[] { "v1", "v2", "base" }, res.Order);
+        Assert.Single(res.Unresolved);
+    }
 }
