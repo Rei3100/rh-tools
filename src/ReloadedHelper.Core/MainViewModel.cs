@@ -230,10 +230,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts, roles, _prefs, roleReasons);
 
+        // 順序変化の有無に関わらず配置理由は常に保存し UI に反映する。
+        _lastPlacementReasons = result.Placements.ToDictionary(
+            p => p.ModId, p => p.Reason, StringComparer.OrdinalIgnoreCase);
+
         // 実際に順序が変わった時だけ書き込み・バックアップ・履歴を残す。
         // （変わらないのに毎回「変更なし」履歴を量産しない）
         if (result.Order.SequenceEqual(game.SortedMods, StringComparer.OrdinalIgnoreCase))
+        {
+            RebuildEntries();
             return;
+        }
 
         _coordinator.Apply(
             trigger,
@@ -242,8 +249,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
             backup: () => LoadOrderBackupService.Backup(configPath, appId));
 
         // ファイルを書き直したので UI に反映（Reload() は再帰ループになるため使わない）
-        _lastPlacementReasons = result.Placements.ToDictionary(
-            p => p.ModId, p => p.Reason, StringComparer.OrdinalIgnoreCase);
         RebuildEntries();
     }
 
