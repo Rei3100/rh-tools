@@ -65,6 +65,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 _selectedGame = value;
                 OnChanged();
+                // ゲームが切り替わる際、前ゲームの配置理由をクリアする。
+                // RunAutoSort が途中でリターンした場合でも旧データが残らないようにする。
+                _lastPlacementReasons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 RebuildEntries();
                 // ユーザーがタブでゲームを切り替えた瞬間に、そのゲームを自動並び替え。
                 // LoadFrom/Reload 中の内部選択では走らせない（_inReload で抑止し、
