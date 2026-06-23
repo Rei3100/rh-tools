@@ -1,3 +1,5 @@
+using ReloadedHelper.Core.Analyzers;
+
 namespace ReloadedHelper.Core;
 
 public enum DiagnosticSeverity { Info, Warning }
@@ -9,7 +11,8 @@ public static class ModDiagnostics
     public static IReadOnlyList<Diagnostic> Analyze(
         GameInfo game,
         IReadOnlyDictionary<string, ModInfo> catalog,
-        IReadOnlyList<FileConflict> conflicts)
+        IReadOnlyList<FileConflict> conflicts,
+        IReadOnlyList<StructureWarning>? structureWarnings = null)
     {
         var enabled = new HashSet<string>(game.EnabledMods, StringComparer.OrdinalIgnoreCase);
         var result = new List<Diagnostic>();
@@ -48,7 +51,11 @@ public static class ModDiagnostics
 
         foreach (var (key, count) in pairCount)
             result.Add(new Diagnostic(key.Loser, DiagnosticSeverity.Info,
-                $"このMODの {count} 個のファイルが「{DisplayName(catalog, key.Winner)}」に上書きされています（読み込み順で後のMODが優先）。意図しない場合は順序を入れ替えてください。"));
+                $"このMODの {count} 個の項目が「{DisplayName(catalog, key.Winner)}」に上書きされています（読み込み順で後のMODが優先）。意図しない場合は順序を入れ替えてください。"));
+
+        if (structureWarnings is not null)
+            foreach (var w in structureWarnings)
+                result.Add(new Diagnostic(w.ModId, DiagnosticSeverity.Warning, w.Message));
 
         return result;
     }
