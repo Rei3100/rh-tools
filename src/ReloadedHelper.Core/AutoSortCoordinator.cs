@@ -23,9 +23,16 @@ public sealed class AutoSortCoordinator
     {
         Directory.CreateDirectory(historyDir);
         _path = Path.Combine(historyDir, "autosort-history.json");
-        _history = File.Exists(_path)
-            ? JsonSerializer.Deserialize<List<AutoSortHistoryEntry>>(File.ReadAllText(_path)) ?? new()
-            : new();
+        try
+        {
+            _history = File.Exists(_path)
+                ? JsonSerializer.Deserialize<List<AutoSortHistoryEntry>>(File.ReadAllText(_path)) ?? new()
+                : new();
+        }
+        catch
+        {
+            _history = new();
+        }
     }
 
     public IReadOnlyList<AutoSortHistoryEntry> History => _history;

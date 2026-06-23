@@ -13,10 +13,17 @@ public sealed class PreferenceStore
     {
         Directory.CreateDirectory(dir);
         _path = Path.Combine(dir, "preferences.json");
-        _winners = File.Exists(_path)
-            ? JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(_path))
-              ?? new(StringComparer.Ordinal)
-            : new(StringComparer.Ordinal);
+        try
+        {
+            _winners = File.Exists(_path)
+                ? JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(_path))
+                  ?? new(StringComparer.Ordinal)
+                : new(StringComparer.Ordinal);
+        }
+        catch
+        {
+            _winners = new(StringComparer.Ordinal);
+        }
     }
 
     private static string Key(string appId, string a, string b)
