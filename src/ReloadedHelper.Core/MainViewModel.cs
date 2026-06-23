@@ -17,7 +17,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private readonly AutoSortCoordinator _coordinator;
     private readonly PreferenceStore _prefs;
-    private bool _startupSortDone;
+    private bool _inReload;
 
     public AutoSortCoordinator Coordinator => _coordinator;
 
@@ -64,6 +64,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 _selectedGame = value;
                 OnChanged();
                 RebuildEntries();
+                // ユーザーがタブでゲームを切り替えた瞬間に、そのゲームを自動並び替え。
+                // LoadFrom/Reload 中の内部選択では走らせない（_inReload で抑止し、
+                // 起動時ソートは LoadFrom 末尾で明示的に1回だけ行う）。
+                if (!_inReload && _install is not null && value is not null)
+                    RunAutoSort(value.AppId, AutoSortTrigger.Startup);
             }
         }
     }
@@ -132,25 +137,30 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _userData = UserDataStore.Load(UserDataStore.DefaultPath);
         Games.Clear();
         foreach (var g in GameCatalog.LoadAll(install.AppsDir)) Games.Add(g);
+        // 読み込み中の内部選択では setter 由来の自動並び替えを抑止（_inReload）。
+        var prevInReload = _inReload;
+        _inReload = true;
         SelectedGame = Games.Count > 0 ? Games[0] : null;
+        _inReload = prevInReload;
         if (SelectedGame is null) RebuildEntries();
-        if (!_startupSortDone && SelectedGame is not null)
-        {
-            _startupSortDone = true;
-            RunAutoSort(SelectedGame.AppId, AutoSortTrigger.Startup);
-        }
+        // 起動時（Reload にネストしていない直接ロード）：選択中ゲームを1回だけ自動並び替え。
+        else if (!_inReload) RunAutoSort(SelectedGame.AppId, AutoSortTrigger.Startup);
     }
 
     public void Reload()
     {
         if (_install is null) return;
         var prevId = SelectedGame?.AppId;
+        // Reload 中は自動並び替えを抑止し、選択タブを復元するだけに留める。
+        // 並び替えが必要な操作（トグル/削除）は呼び出し側が明示的に RunAutoSort する。
+        _inReload = true;
         LoadFrom(_install);
         if (prevId is not null)
         {
             var restored = Games.FirstOrDefault(g => g.AppId == prevId);
             if (restored is not null) SelectedGame = restored;
         }
+        _inReload = false;
     }
 
     public void ApplyMetadataToRow(string modId, string jaName, string jaDesc, string? category, string? author)
@@ -215,6 +225,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
             StringComparer.OrdinalIgnoreCase);
 
         var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts, roles, _prefs);
+
+        // 実際に順序が変わった時だけ書き込み・バックアップ・履歴を残す。
+        // （変わらないのに毎回「変更なし」履歴を量産しない）
+        if (result.Order.SequenceEqual(game.SortedMods, StringComparer.OrdinalIgnoreCase))
+            return;
 
         _coordinator.Apply(
             trigger,

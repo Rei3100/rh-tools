@@ -120,6 +120,8 @@ public partial class ModEditWindow : Window
         }
 
         _vm.Reload();
+        if (_vm.SelectedGame is not null)
+            _vm.RunAutoSort(_vm.SelectedGame.AppId, AutoSortTrigger.Delete);
         Close();
     }
 }

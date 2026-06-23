@@ -181,6 +181,8 @@ public partial class ModListView : UserControl
         }
 
         vm.Reload();
+        if (vm.SelectedGame is not null)
+            vm.RunAutoSort(vm.SelectedGame.AppId, AutoSortTrigger.Delete);
     }
 
     private void OpenEditWindow(ModLoadEntry entry)
