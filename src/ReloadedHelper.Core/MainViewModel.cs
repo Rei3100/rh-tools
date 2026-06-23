@@ -6,10 +6,26 @@ namespace ReloadedHelper.Core;
 
 public sealed class MainViewModel : INotifyPropertyChanged
 {
+    private static readonly string _appDataDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "ReloadedHelper");
+
     private IReadOnlyDictionary<string, ModInfo> _catalog = new Dictionary<string, ModInfo>();
     private IReadOnlyList<ModLoadEntry> _allEntries = Array.Empty<ModLoadEntry>();
     private ReloadedInstall? _install;
     private UserDataFile _userData = new();
+
+    private readonly AutoSortCoordinator _coordinator;
+    private readonly PreferenceStore _prefs;
+    private bool _startupSortDone;
+
+    public AutoSortCoordinator Coordinator => _coordinator;
+
+    public MainViewModel()
+    {
+        _coordinator = new AutoSortCoordinator(_appDataDir);
+        _prefs = new PreferenceStore(_appDataDir);
+    }
 
     public IReadOnlyDictionary<string, ModInfo> AllMods => _catalog;
     public ReloadedInstall? Install => _install;
@@ -118,6 +134,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         foreach (var g in GameCatalog.LoadAll(install.AppsDir)) Games.Add(g);
         SelectedGame = Games.Count > 0 ? Games[0] : null;
         if (SelectedGame is null) RebuildEntries();
+        if (!_startupSortDone && SelectedGame is not null)
+        {
+            _startupSortDone = true;
+            RunAutoSort(SelectedGame.AppId, AutoSortTrigger.Startup);
+        }
     }
 
     public void Reload()
@@ -174,6 +195,49 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         AppConfigWriter.WriteEnabledAndSorted(configPath, game.AppId, newEnabled, newSorted);
         Reload();   // SelectedGame を保持して再読込（タブ飛び防止・DRY）
+        RunAutoSort(game.AppId, AutoSortTrigger.ToggleEnable);
+    }
+
+    public void RunAutoSort(string appId, AutoSortTrigger trigger)
+    {
+        if (SelectedGame is null || _install is null) return;
+        var game = SelectedGame;
+        if (!string.Equals(game.AppId, appId, StringComparison.OrdinalIgnoreCase)) return;
+
+        var configPath = Path.Combine(game.FolderPath, "AppConfig.json");
+        if (!File.Exists(configPath)) return;
+
+        var diagResult = GameDiagnostics.Run(game, _catalog);
+        var roles = BuildRoles(_allEntries, _catalog);
+        var depMap = _catalog.ToDictionary(
+            kv => kv.Key,
+            kv => (IReadOnlyList<string>)kv.Value.Dependencies,
+            StringComparer.OrdinalIgnoreCase);
+
+        var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts, roles, _prefs);
+
+        _coordinator.Apply(
+            trigger,
+            result,
+            applyOrder: order => AppConfigWriter.WriteEnabledAndSorted(configPath, appId, game.EnabledMods.ToList(), order.ToList()),
+            backup: () => LoadOrderBackupService.Backup(configPath, appId));
+
+        // ファイルを書き直したので UI に反映（Reload() は再帰ループになるため使わない）
+        RebuildEntries();
+    }
+
+    internal static IReadOnlyDictionary<string, ModRole> BuildRoles(
+        IReadOnlyList<ModLoadEntry> entries,
+        IReadOnlyDictionary<string, ModInfo> catalog)
+    {
+        var roles = new Dictionary<string, ModRole>(StringComparer.OrdinalIgnoreCase);
+        foreach (var e in entries)
+        {
+            var info = e.Info ?? (catalog.TryGetValue(e.ModId, out var ci) ? ci : null);
+            if (info is null) { roles[e.ModId] = ModRole.Unknown; continue; }
+            roles[e.ModId] = ModRoleClassifier.Classify(info, e.Category);
+        }
+        return roles;
     }
 
     private void RebuildEntries()
