@@ -19,7 +19,11 @@ if ($cmd -match "--no-verify") {
 }
 
 # ソリューションファイルのパスをフック自身の場所から解決する
-$slnPath = Join-Path $PSScriptRoot "..\..\reloaded-helper.slnx" | Resolve-Path
+$slnPath = Join-Path $PSScriptRoot "..\..\reloaded-helper.slnx"
+if (-not (Test-Path $slnPath)) {
+    Write-Error "ソリューションファイルが見つかりません: $slnPath"
+    exit 2
+}
 
 # ビルドチェック
 Write-Host "コミット前ビルドチェック中..."
@@ -38,5 +42,5 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "テスト成功。"
 
-Write-Host "ビルド成功。コミットを許可します。"
+Write-Host "ビルド・テスト成功。コミットを許可します。"
 exit 0
