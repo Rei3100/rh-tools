@@ -1,5 +1,6 @@
 // src/ReloadedHelper.Core/ModTypeClassifier.cs
 using System.IO;
+using ReloadedHelper.Core.Analyzers;
 
 namespace ReloadedHelper.Core;
 
@@ -51,6 +52,19 @@ public static class ModTypeClassifier
     {
         "other/misc", "qol", "fixes", "cheats", "events", "bomb/defuse",
     };
+
+    // 資源（実際にゲームの何を触るか）を最優先に種類を判定する。
+    // 曲・コスチュームは資源で確定。それ以外は従来のカテゴリ/キーワード判定へ委譲。
+    public static TypeDecision Classify(ModInfo mod, string? category, IReadOnlyList<ResourceKey> resources)
+    {
+        if (mod.IsLibrary)
+            return new(ModType.Library, "ライブラリ指定のため前方に配置");
+        if (resources.Any(r => r.Kind == ResourceKind.Song))
+            return new(ModType.Music, "曲データを書き換えるため音楽として配置");
+        if (resources.Any(r => r.Kind == ResourceKind.Costume))
+            return new(ModType.Costume, "コスチューム枠を登録するため衣装として配置");
+        return Classify(mod, category);
+    }
 
     public static TypeDecision Classify(ModInfo mod, string? category)
     {
