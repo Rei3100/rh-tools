@@ -1,4 +1,5 @@
 using ReloadedHelper.Core;
+using ReloadedHelper.Core.Analyzers;
 using Xunit;
 
 namespace ReloadedHelper.Core.Tests;
@@ -15,7 +16,9 @@ public class AutoSortWiringTests
         };
         var entries = new[] { new ModLoadEntry(0, "lib", catalog["lib"], true, null, true) };
 
-        var decisions = MainViewModel.BuildTypeDecisions(entries, catalog);
+        var resources = new Dictionary<string, IReadOnlyList<ResourceKey>>(
+            System.StringComparer.OrdinalIgnoreCase);
+        var decisions = MainViewModel.BuildTypeDecisions(entries, catalog, resources);
 
         Assert.Equal(ModType.Library, decisions["lib"].Type);
         Assert.False(string.IsNullOrWhiteSpace(decisions["lib"].Reason));
@@ -27,7 +30,9 @@ public class AutoSortWiringTests
         var catalog = new Dictionary<string, ModInfo>();
         var entries = new[] { new ModLoadEntry(0, "ghost", null, true, null, false) };
 
-        var decisions = MainViewModel.BuildTypeDecisions(entries, catalog);
+        var resources = new Dictionary<string, IReadOnlyList<ResourceKey>>(
+            System.StringComparer.OrdinalIgnoreCase);
+        var decisions = MainViewModel.BuildTypeDecisions(entries, catalog, resources);
 
         Assert.Equal(ModType.Unknown, decisions["ghost"].Type);
     }
