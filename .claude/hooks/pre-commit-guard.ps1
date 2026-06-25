@@ -18,13 +18,27 @@ if ($cmd -match "--no-verify") {
     exit 2
 }
 
+# ソリューションファイルのパスをフック自身の場所から解決する
+$slnPath = Join-Path $PSScriptRoot "..\..\reloaded-helper.slnx"
+if (-not (Test-Path $slnPath)) {
+    Write-Error "ソリューションファイルが見つかりません: $slnPath"
+    exit 2
+}
+
 # ビルドチェック
 Write-Host "コミット前ビルドチェック中..."
-$buildOutput = dotnet build "reloaded-helper.slnx" 2>&1
+$buildOutput = dotnet build "$slnPath" 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Error "ビルドエラーが検出されました。コミットをブロックします。`n$($buildOutput | Out-String)"
     exit 2
 }
 
-Write-Host "ビルド成功。コミットを許可します。"
+# テストチェック
+Write-Host "コミット前テスト実行中..."
+$testOutput = dotnet test "$slnPath" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "テスト失敗が検出されました。コミットをブロックします。`n$($testOutput | Out-String)"
+    exit 2
+}
+Write-Host "ビルド・テスト成功。コミットを許可します。"
 exit 0
