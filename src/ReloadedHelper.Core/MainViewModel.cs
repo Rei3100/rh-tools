@@ -268,15 +268,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IReadOnlyDictionary<string, ModInfo> catalog,
         IReadOnlyDictionary<string, IReadOnlyList<Analyzers.ResourceKey>> resourcesByMod)
     {
+        // 依存被参照数（このMODを何個のMODが依存先に挙げているか）＝土台らしさの指標。
+        var dependents = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kv in catalog)
+            foreach (var dep in kv.Value.Dependencies)
+                dependents[dep] = dependents.TryGetValue(dep, out var n) ? n + 1 : 1;
+
         var map = new Dictionary<string, TypeDecision>(StringComparer.OrdinalIgnoreCase);
         foreach (var e in entries)
         {
             var info = e.Info ?? (catalog.TryGetValue(e.ModId, out var ci) ? ci : null);
             var res = resourcesByMod.TryGetValue(e.ModId, out var r)
                 ? r : System.Array.Empty<Analyzers.ResourceKey>();
+            var deps = dependents.TryGetValue(e.ModId, out var dc) ? dc : 0;
             map[e.ModId] = info is null
                 ? new TypeDecision(ModType.Unknown, "情報が無いため末尾に配置")
-                : ModTypeClassifier.Classify(info, e.Category, res);
+                : ModTypeClassifier.Classify(info, e.Category, res, deps);
         }
         return map;
     }
