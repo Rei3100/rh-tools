@@ -95,7 +95,7 @@ public static class LoadOrderSorter
         {
             if (!present.Contains(before) || !present.Contains(after)) continue;
             if (string.Equals(before, after, StringComparison.OrdinalIgnoreCase)) continue;
-            var key = $"{before.ToLowerInvariant()}{after.ToLowerInvariant()}";
+            var key = $"{before.ToLowerInvariant()} {after.ToLowerInvariant()}";
             if (!seen.Add(key)) continue;
             afters[before].Add(after);
             inDegree[after]++;
@@ -105,7 +105,9 @@ public static class LoadOrderSorter
         var comparer = Comparer<string>.Create((x, y) =>
         {
             int c = Rank(x).CompareTo(Rank(y));
-            return c != 0 ? c : index[x].CompareTo(index[y]);
+            if (c != 0) return c;
+            int ci = index.GetValueOrDefault(x).CompareTo(index.GetValueOrDefault(y));
+            return ci != 0 ? ci : StringComparer.OrdinalIgnoreCase.Compare(x, y);
         });
 
         var ready = new SortedSet<string>(comparer);
