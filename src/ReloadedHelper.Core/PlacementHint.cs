@@ -10,7 +10,7 @@ public static class PlacementHintParser
 {
     // 「後ろ/下/最後＝このMODを後勝ちにしたい」
     private static readonly Regex Late = new(
-        @"load\s+(this\s+)?(mod\s+)?(below|after|last)\b|\bbut\s+below\b|\bbelow\s+\w|\bat\s+the\s+bottom|highest\s+priority|一番下に|最後に(読み込|ロード|配置|入れ)",
+        @"load\s+(this\s+)?(mod\s+)?(below|after|last)\b|\bbut\s+below\b|\bat\s+the\s+bottom|highest\s+priority|一番下に|最後に(読み込|ロード|配置|入れ)",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     // 「前/上/最初＝このMODを土台側にしたい」
