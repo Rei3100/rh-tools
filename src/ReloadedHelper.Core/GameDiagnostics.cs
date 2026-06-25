@@ -3,7 +3,9 @@ using ReloadedHelper.Core.Analyzers;
 namespace ReloadedHelper.Core;
 
 public sealed record GameDiagnosticsResult(
-    IReadOnlyList<FileConflict> Conflicts, IReadOnlyList<Diagnostic> Diagnostics);
+    IReadOnlyList<FileConflict> Conflicts,
+    IReadOnlyList<Diagnostic> Diagnostics,
+    IReadOnlyList<ModResources> Resources);
 
 public static class GameDiagnostics
 {
@@ -31,6 +33,6 @@ public static class GameDiagnostics
 
         var conflicts = ConflictDetector.Detect(ordered);
         var diagnostics = ModDiagnostics.Analyze(game, catalog, conflicts, structureWarnings);
-        return new GameDiagnosticsResult(conflicts, diagnostics);
+        return new GameDiagnosticsResult(conflicts, diagnostics, ordered);
     }
 }
