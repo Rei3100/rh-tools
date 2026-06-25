@@ -62,6 +62,6 @@ public class WinnerResolverTests
     {
         // 3件でも必ず1つ返す（null や例外にならない）。
         var w = WinnerResolver.Resolve(Ev(new[] { "x", "y", "z" }));
-        Assert.Contains(w, new[] { "x", "y", "z" });
+        Assert.Equal("z", w); // 全証拠中立なら現在順で最後尾が勝つ（決定論的）
     }
 }

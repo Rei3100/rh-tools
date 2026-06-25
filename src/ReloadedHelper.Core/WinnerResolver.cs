@@ -29,7 +29,7 @@ public static class WinnerResolver
         int hint = ev.HintOf(m) switch { PlacementHint.Late => 1, PlacementHint.Early => -1, _ => 0 };
         int ext = ev.ConflictMods.Any(o =>
             !string.Equals(o, m, StringComparison.OrdinalIgnoreCase) && ev.DependsOn(m, o)) ? 1 : 0;
-        int spec = -ev.ResourceCount(m);            // 資源が少ない＝後ろ
+        int spec = -ev.ResourceCount(m);            // 資源が少ない＝狙った上書き＝勝ち（逆符号：値が大きいほど勝ち）
         int rank = ModTypeInfo.Rank(ev.TypeOf(m));  // 弱い tie-break
         int idx = ev.CurrentIndex(m);               // 現在順で後ろほど勝ち＋一意化
         return (hint, ext, spec, rank, idx);
