@@ -19,46 +19,36 @@ public static class LoadOrderOptimizer
         IReadOnlyList<FileConflict> conflicts,
         IReadOnlyDictionary<string, ModType> typesByMod,
         PreferenceStore prefs,
-        IReadOnlyDictionary<string, string>? typeReasons = null)
+        IReadOnlyDictionary<string, string>? typeReasons = null,
+        IReadOnlyDictionary<string, int>? resourceCountByMod = null,
+        IReadOnlyDictionary<string, PlacementHint>? hintsByMod = null)
     {
-        // 0. 種類ランクで全MODを安定整列（弱い土台が前、見た目が後ろ）。同種は元順を維持。
-        var layered = currentOrder
-            .Select((id, i) => (id, i, rank: ModTypeInfo.Rank(typesByMod.GetValueOrDefault(id, ModType.Unknown))))
-            .OrderBy(x => x.rank).ThenBy(x => x.i)
-            .Select(x => x.id)
-            .ToList();
-
-        // 1. 依存を満たす基準順（層整列を初期順として依存ソート）
-        var order = LoadOrderSorter.Sort(layered, dependenciesOf).ToList();
+        // 1. 依存を満たす基準順。大域的な種類整列は行わない（競合に無関係なMODは動かさない）。
+        var order = LoadOrderSorter.Sort(currentOrder, dependenciesOf).ToList();
         var reasons = new List<PlacementReason>();
-        var unresolved = new List<(string A, string B)>();
-        // 同じMODペアが複数ファイルで競合しても「要確認」は1件だけにする（順不同で同一視）。
-        var seenUnresolved = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        void AddUnresolved(string a, string b)
-        {
-            var (lo, hi) = string.CompareOrdinal(a, b) <= 0 ? (a, b) : (b, a);
-            if (seenUnresolved.Add($"{lo.ToLowerInvariant()}|{hi.ToLowerInvariant()}"))
-                unresolved.Add((a, b));
-        }
 
-        // 依存制約: dep は dependent より前。入れ替えがこれを壊さないか確認用。
-        bool DependsOn(string mod, string maybeDep)
-            => dependenciesOf.TryGetValue(mod, out var d) &&
-               d.Contains(maybeDep, StringComparer.OrdinalIgnoreCase);
+        // 証拠の引き当て（依存ソート後の位置を安定 tiebreak に使う）
+        var indexSnapshot = order
+            .Select((id, i) => (id, i))
+            .ToDictionary(x => x.id, x => x.i, StringComparer.OrdinalIgnoreCase);
+        int CurrentIndex(string id) => indexSnapshot.TryGetValue(id, out var i) ? i : int.MaxValue;
+        int ResourceCount(string id) =>
+            resourceCountByMod is not null && resourceCountByMod.TryGetValue(id, out var n) ? n : int.MaxValue;
+        PlacementHint HintOf(string id) =>
+            hintsByMod is not null && hintsByMod.TryGetValue(id, out var h) ? h : PlacementHint.None;
+        ModType TypeOf(string id) => typesByMod.GetValueOrDefault(id, ModType.Unknown);
+        bool DependsOn(string mod, string maybeDep) =>
+            dependenciesOf.TryGetValue(mod, out var d) && d.Contains(maybeDep, StringComparer.OrdinalIgnoreCase);
 
         foreach (var c in conflicts)
         {
             if (c.ModIds.Count < 2) continue;
-            // 代表ペア（履歴で「要確認」を可視化するため。多重競合でも握りつぶさない）
-            var repA = c.ModIds[0];
-            var repB = c.ModIds[^1];
 
-            // 勝者決定：2件はユーザーの好みを優先、それ以外（多重）は種類で一意なら解決。
-            string? winner = c.ModIds.Count == 2
-                ? prefs.GetWinner(appId, c.ModIds[0], c.ModIds[1]) ?? DecideByType(c.ModIds, typesByMod)
-                : DecideByType(c.ModIds, typesByMod);
-
-            if (winner is null) { AddUnresolved(repA, repB); continue; }
+            // 勝者：2件はユーザーの好み（あれば）を最優先、無ければ証拠で必ず決め切る。
+            string winner =
+                (c.ModIds.Count == 2 ? prefs.GetWinner(appId, c.ModIds[0], c.ModIds[1]) : null)
+                ?? WinnerResolver.Resolve(new WinnerEvidence(
+                    c.ModIds, HintOf, DependsOn, ResourceCount, TypeOf, CurrentIndex));
 
             var losers = c.ModIds
                 .Where(m => !string.Equals(m, winner, StringComparison.OrdinalIgnoreCase))
@@ -67,13 +57,18 @@ public static class LoadOrderOptimizer
             int wi = IndexOf(order, winner);
             if (wi < 0) continue;
 
-            // 勝者が壊す依存（敗者が勝者に依存）があるなら自動では動かさない
-            if (losers.Any(l => DependsOn(l, winner))) { AddUnresolved(repA, repB); continue; }
+            // 依存を壊す移動はしない（依存＝最強の制約）。勝たせられない事情を正直に記録。
+            var blocking = losers.Where(l => DependsOn(l, winner)).ToList();
+            if (blocking.Count > 0)
+            {
+                reasons.Add(new PlacementReason(winner, blocking[^1],
+                    $"「{winner}」を後ろにしたいところですが、「{blocking[^1]}」が「{winner}」に依存するため前に保ちます（結果「{blocking[^1]}」側が反映されます）。"));
+                continue;
+            }
 
             int maxLoser = losers.Select(l => IndexOf(order, l)).DefaultIfEmpty(-1).Max();
             if (maxLoser < 0 || wi > maxLoser) continue; // すでに全敗者より後ろ＝OK
 
-            // 勝者を、全敗者の後ろ（最後の敗者の直後）へ移動
             order.RemoveAt(wi);
             maxLoser = losers.Select(l => IndexOf(order, l)).Max();
             order.Insert(maxLoser + 1, winner);
@@ -91,23 +86,9 @@ public static class LoadOrderOptimizer
             return new ModPlacement(id, ModTypeInfo.Rank(type), ModTypeInfo.Label(type), reason);
         }).ToList();
 
-        return new OptimizeResult(order, reasons, unresolved, placements);
-    }
-
-    // 競合する全MODのうち、種類ランクが最大で一意なものを勝者に（後ろ＝勝ち）。
-    // 同点・最大が Unknown なら自動判断しない（＝要確認）。
-    private static string? DecideByType(IReadOnlyList<string> mods, IReadOnlyDictionary<string, ModType> types)
-    {
-        var ranked = mods
-            .Select(m => (mod: m, type: types.GetValueOrDefault(m, ModType.Unknown)))
-            .Select(x => (x.mod, x.type, rank: ModTypeInfo.Rank(x.type)))
-            .OrderByDescending(x => x.rank)
-            .ToList();
-
-        var top = ranked[0];
-        if (top.type == ModType.Unknown) return null;
-        if (ranked.Count(x => x.rank == top.rank) > 1) return null;
-        return top.mod;
+        // Unresolved は廃止（必ず決め切る）。互換のため空で返す。
+        return new OptimizeResult(order, reasons,
+            System.Array.Empty<(string A, string B)>(), placements);
     }
 
     private static int IndexOf(List<string> list, string id)
