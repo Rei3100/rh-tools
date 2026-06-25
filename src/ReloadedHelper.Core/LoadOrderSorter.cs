@@ -70,4 +70,64 @@ public static class LoadOrderSorter
 
         return result.AsReadOnly();
     }
+
+    /// <summary>
+    /// 「Before は After より前」を全て満たし、自由な部分は (groupRank昇順 → 現在順index昇順) で並べる。
+    /// currentOrder に無いノードを含む辺は無視。循環に巻き込まれたノードは末尾へ現在順で残す。
+    /// </summary>
+    public static IReadOnlyList<string> SortByEdges(
+        IReadOnlyList<string> currentOrder,
+        IReadOnlyCollection<(string Before, string After)> edges,
+        IReadOnlyDictionary<string, int> groupRankOf)
+    {
+        var present = new HashSet<string>(currentOrder, StringComparer.OrdinalIgnoreCase);
+        var index = currentOrder
+            .Select((id, i) => (id, i))
+            .ToDictionary(x => x.id, x => x.i, StringComparer.OrdinalIgnoreCase);
+
+        var afters = currentOrder.ToDictionary(
+            m => m, _ => new List<string>(), StringComparer.OrdinalIgnoreCase);
+        var inDegree = currentOrder.ToDictionary(
+            m => m, _ => 0, StringComparer.OrdinalIgnoreCase);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var (before, after) in edges)
+        {
+            if (!present.Contains(before) || !present.Contains(after)) continue;
+            if (string.Equals(before, after, StringComparison.OrdinalIgnoreCase)) continue;
+            var key = $"{before.ToLowerInvariant()}{after.ToLowerInvariant()}";
+            if (!seen.Add(key)) continue;
+            afters[before].Add(after);
+            inDegree[after]++;
+        }
+
+        int Rank(string id) => groupRankOf.TryGetValue(id, out var r) ? r : int.MaxValue;
+        var comparer = Comparer<string>.Create((x, y) =>
+        {
+            int c = Rank(x).CompareTo(Rank(y));
+            return c != 0 ? c : index[x].CompareTo(index[y]);
+        });
+
+        var ready = new SortedSet<string>(comparer);
+        foreach (var m in currentOrder)
+            if (inDegree[m] == 0) ready.Add(m);
+
+        var result = new List<string>(currentOrder.Count);
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (ready.Count > 0)
+        {
+            var m = ready.Min!;
+            ready.Remove(m);
+            result.Add(m);
+            visited.Add(m);
+            foreach (var a in afters[m])
+                if (--inDegree[a] == 0) ready.Add(a);
+        }
+
+        // 循環に巻き込まれて出られなかったノードは現在順で末尾へ。
+        foreach (var m in currentOrder)
+            if (!visited.Contains(m)) result.Add(m);
+
+        return result;
+    }
 }
