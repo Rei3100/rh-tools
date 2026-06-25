@@ -6,129 +6,97 @@ namespace ReloadedHelper.Core.Tests;
 public class LoadOrderOptimizerTests
 {
     private static readonly Dictionary<string, IReadOnlyList<string>> NoDeps = new();
-    private static IReadOnlyDictionary<string, ModRole> Roles(params (string id, ModRole r)[] xs)
-        => xs.ToDictionary(x => x.id, x => x.r, StringComparer.OrdinalIgnoreCase);
-
+    private static IReadOnlyDictionary<string, ModType> Types(params (string id, ModType t)[] xs)
+        => xs.ToDictionary(x => x.id, x => x.t, StringComparer.OrdinalIgnoreCase);
     private static PreferenceStore EmptyPrefs()
         => new(System.IO.Directory.CreateTempSubdirectory().FullName);
 
     [Fact]
-    public void Layering_PlacesVisualAfterBase_NoMoveNeeded()
+    public void Layering_PlacesVisualAfterGameplay()
     {
-        // 層整列で base(rank1) が先、visual(rank3) が後ろになる。衝突移動は不要。
-        var order = new[] { "visual", "base" };
-        var conflicts = new[] { new FileConflict("file:hair.bin", new[] { "visual", "base" }, "base") };
-        var roles = Roles(("visual", ModRole.VisualOverride), ("base", ModRole.BaseLayer));
+        // skintex(rank7) は gameplay(rank1) より後ろへ層整列される。衝突移動は不要。
+        var order = new[] { "skin", "play" };
+        var conflicts = new[] { new FileConflict("file:a", new[] { "skin", "play" }, "play") };
+        var types = Types(("skin", ModType.SkinTexture), ("play", ModType.Gameplay));
 
-        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, EmptyPrefs());
+        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, types, EmptyPrefs());
 
-        Assert.True(res.Order.ToList().IndexOf("visual") > res.Order.ToList().IndexOf("base"));
+        Assert.True(res.Order.ToList().IndexOf("skin") > res.Order.ToList().IndexOf("play"));
         Assert.Empty(res.Unresolved);
-        Assert.Empty(res.Reasons);                 // 層整列で解決済み＝移動記録なし
-        Assert.Equal(2, res.Placements.Count);     // 全MODに配置理由が付く
+        Assert.Equal(2, res.Placements.Count);
     }
 
     [Fact]
-    public void Preference_OverridesRole()
+    public void Preference_OverridesType()
     {
-        var order = new[] { "visual", "base" };
-        var conflicts = new[] { new FileConflict("file:hair.bin", new[] { "visual", "base" }, "base") };
-        var roles = Roles(("visual", ModRole.VisualOverride), ("base", ModRole.BaseLayer));
+        var order = new[] { "skin", "play" };
+        var conflicts = new[] { new FileConflict("file:a", new[] { "skin", "play" }, "play") };
+        var types = Types(("skin", ModType.SkinTexture), ("play", ModType.Gameplay));
         var prefs = EmptyPrefs();
-        prefs.SetWinner("p5r", "visual", "base", "base"); // ユーザーは base を勝たせたい
+        prefs.SetWinner("p5r", "skin", "play", "play"); // ユーザーは play を勝たせたい
 
-        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, prefs);
+        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, types, prefs);
 
-        // base が勝者＝後ろ。現状すでに base が後ろなので並びは維持。
-        Assert.True(res.Order.ToList().IndexOf("base") > res.Order.ToList().IndexOf("visual"));
+        Assert.True(res.Order.ToList().IndexOf("play") > res.Order.ToList().IndexOf("skin"));
     }
 
     [Fact]
-    public void Unknown_VsUnknown_IsUnresolved_NoMove()
+    public void SameType_IsUnresolved_NoMove()
+    {
+        var order = new[] { "a", "b" };
+        var conflicts = new[] { new FileConflict("file:a", new[] { "a", "b" }, "b") };
+        var types = Types(("a", ModType.SkinTexture), ("b", ModType.SkinTexture));
+
+        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, types, EmptyPrefs());
+
+        Assert.Single(res.Unresolved);
+    }
+
+    [Fact]
+    public void UnknownTop_IsUnresolved_NoMove()
     {
         var order = new[] { "x", "y" };
         var conflicts = new[] { new FileConflict("file:a", new[] { "x", "y" }, "y") };
-        var roles = Roles(("x", ModRole.Unknown), ("y", ModRole.Unknown));
+        var types = Types(("x", ModType.Unknown), ("y", ModType.Unknown));
 
-        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, EmptyPrefs());
+        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, types, EmptyPrefs());
 
         Assert.Equal(new[] { "x", "y" }, res.Order);
         Assert.Single(res.Unresolved);
     }
 
     [Fact]
-    public void ThreeWay_LayeringPlacesVisualLast()
+    public void Unresolved_IsDeduplicated()
     {
-        var order = new[] { "visual", "base1", "base2" };
-        var conflicts = new[]
-        {
-            new FileConflict("file:hair.bin", new[] { "visual", "base1", "base2" }, "base2"),
-        };
-        var roles = Roles(
-            ("visual", ModRole.VisualOverride),
-            ("base1", ModRole.BaseLayer),
-            ("base2", ModRole.BaseLayer));
-
-        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, EmptyPrefs());
-
-        var idx = res.Order.ToList();
-        Assert.True(idx.IndexOf("visual") > idx.IndexOf("base1"));
-        Assert.True(idx.IndexOf("visual") > idx.IndexOf("base2"));
-        Assert.Empty(res.Unresolved);
-        Assert.Empty(res.Reasons);
-    }
-
-    [Fact]
-    public void Unresolved_IsDeduplicated_AcrossMultipleConflictingFiles()
-    {
-        // 同じ2MODが複数ファイルで競合 → 要確認は1件にまとめる（重複排除・順不同）。
         var order = new[] { "x", "y" };
-        var roles = Roles(("x", ModRole.Unknown), ("y", ModRole.Unknown));
+        var types = Types(("x", ModType.Unknown), ("y", ModType.Unknown));
         var conflicts = new[]
         {
             new FileConflict("file:a", new[] { "x", "y" }, "y"),
             new FileConflict("file:b", new[] { "x", "y" }, "y"),
-            new FileConflict("file:c", new[] { "y", "x" }, "x"), // 順番違いも同一視
+            new FileConflict("file:c", new[] { "y", "x" }, "x"),
         };
 
-        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, EmptyPrefs());
+        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, types, EmptyPrefs());
 
         Assert.Single(res.Unresolved);
     }
 
     [Fact]
-    public void ThreeWay_TwoTopRoles_IsUnresolved_NoMove()
-    {
-        // v1,v2(rank3) は base(rank1) の後ろへ層整列される。勝者一意でないので衝突は要確認。
-        var order = new[] { "v1", "v2", "base" };
-        var conflicts = new[]
-        {
-            new FileConflict("file:a", new[] { "v1", "v2", "base" }, "base"),
-        };
-        var roles = Roles(
-            ("v1", ModRole.VisualOverride),
-            ("v2", ModRole.VisualOverride),
-            ("base", ModRole.BaseLayer));
-
-        var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps, conflicts, roles, EmptyPrefs());
-
-        Assert.Equal(new[] { "base", "v1", "v2" }, res.Order); // 層整列後の順
-        Assert.Single(res.Unresolved);
-    }
-
-    [Fact]
-    public void Placements_UseProvidedRoleReasons()
+    public void Placements_UseProvidedTypeReasons()
     {
         var order = new[] { "a" };
-        var roles = Roles(("a", ModRole.VisualOverride));
+        var types = Types(("a", ModType.SkinTexture));
         var reasons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["a"] = "衣装フォルダがあるため見た目として後方に配置",
+            ["a"] = "名前・説明からスキン・テクスチャと判定",
         };
 
         var res = LoadOrderOptimizer.Optimize("p5r", order, NoDeps,
-            Array.Empty<FileConflict>(), roles, EmptyPrefs(), reasons);
+            System.Array.Empty<FileConflict>(), types, EmptyPrefs(), reasons);
 
-        Assert.Equal("衣装フォルダがあるため見た目として後方に配置", res.Placements[0].Reason);
+        Assert.Equal("名前・説明からスキン・テクスチャと判定", res.Placements[0].Reason);
+        Assert.Equal(ModTypeInfo.Rank(ModType.SkinTexture), res.Placements[0].LayerRank);
+        Assert.Equal(ModTypeInfo.Label(ModType.SkinTexture), res.Placements[0].LayerLabel);
     }
 }

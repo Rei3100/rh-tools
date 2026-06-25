@@ -223,15 +223,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!File.Exists(configPath)) return;
 
         var diagResult = GameDiagnostics.Run(game, _catalog);
-        var decisions = BuildRoleDecisions(_allEntries, _catalog);
-        var roles = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Role, StringComparer.OrdinalIgnoreCase);
-        var roleReasons = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Reason, StringComparer.OrdinalIgnoreCase);
+        var decisions = BuildTypeDecisions(_allEntries, _catalog);
+        var types = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Type, StringComparer.OrdinalIgnoreCase);
+        var typeReasons = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Reason, StringComparer.OrdinalIgnoreCase);
         var depMap = _catalog.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<string>)kv.Value.Dependencies,
             StringComparer.OrdinalIgnoreCase);
 
-        var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts, roles, _prefs, roleReasons);
+        var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts, types, _prefs, typeReasons);
 
         // 順序変化の有無に関わらず配置理由は常に保存し UI に反映する。
         _lastPlacementReasons = result.Placements.ToDictionary(
@@ -277,26 +277,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
         return learned;
     }
 
-    internal static IReadOnlyDictionary<string, RoleDecision> BuildRoleDecisions(
+    internal static IReadOnlyDictionary<string, TypeDecision> BuildTypeDecisions(
         IReadOnlyList<ModLoadEntry> entries,
         IReadOnlyDictionary<string, ModInfo> catalog)
     {
-        var map = new Dictionary<string, RoleDecision>(StringComparer.OrdinalIgnoreCase);
+        var map = new Dictionary<string, TypeDecision>(StringComparer.OrdinalIgnoreCase);
         foreach (var e in entries)
         {
             var info = e.Info ?? (catalog.TryGetValue(e.ModId, out var ci) ? ci : null);
             map[e.ModId] = info is null
-                ? new RoleDecision(ModRole.Unknown, "情報が無いため末尾に配置")
-                : ContentRoleClassifier.Classify(info, e.Category);
+                ? new TypeDecision(ModType.Unknown, "情報が無いため末尾に配置")
+                : ModTypeClassifier.Classify(info, e.Category);
         }
         return map;
     }
-
-    internal static IReadOnlyDictionary<string, ModRole> BuildRoles(
-        IReadOnlyList<ModLoadEntry> entries,
-        IReadOnlyDictionary<string, ModInfo> catalog)
-        => BuildRoleDecisions(entries, catalog)
-            .ToDictionary(kv => kv.Key, kv => kv.Value.Role, StringComparer.OrdinalIgnoreCase);
 
     private void RebuildEntries()
     {

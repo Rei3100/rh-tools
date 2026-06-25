@@ -17,13 +17,13 @@ public static class LoadOrderOptimizer
         IReadOnlyList<string> currentOrder,
         IReadOnlyDictionary<string, IReadOnlyList<string>> dependenciesOf,
         IReadOnlyList<FileConflict> conflicts,
-        IReadOnlyDictionary<string, ModRole> rolesByMod,
+        IReadOnlyDictionary<string, ModType> typesByMod,
         PreferenceStore prefs,
-        IReadOnlyDictionary<string, string>? roleReasons = null)
+        IReadOnlyDictionary<string, string>? typeReasons = null)
     {
-        // 0. 役割の層ランクで全MODを安定整列（弱い土台が前、見た目が後ろ）。同層は元順を維持。
+        // 0. 種類ランクで全MODを安定整列（弱い土台が前、見た目が後ろ）。同種は元順を維持。
         var layered = currentOrder
-            .Select((id, i) => (id, i, rank: ModLayer.Rank(rolesByMod.GetValueOrDefault(id, ModRole.Unknown))))
+            .Select((id, i) => (id, i, rank: ModTypeInfo.Rank(typesByMod.GetValueOrDefault(id, ModType.Unknown))))
             .OrderBy(x => x.rank).ThenBy(x => x.i)
             .Select(x => x.id)
             .ToList();
@@ -53,10 +53,10 @@ public static class LoadOrderOptimizer
             var repA = c.ModIds[0];
             var repB = c.ModIds[^1];
 
-            // 勝者決定：2件はユーザーの好みを優先、それ以外（多重）は役割で一意なら解決。
+            // 勝者決定：2件はユーザーの好みを優先、それ以外（多重）は種類で一意なら解決。
             string? winner = c.ModIds.Count == 2
-                ? prefs.GetWinner(appId, c.ModIds[0], c.ModIds[1]) ?? DecideByRole(c.ModIds, rolesByMod)
-                : DecideByRole(c.ModIds, rolesByMod);
+                ? prefs.GetWinner(appId, c.ModIds[0], c.ModIds[1]) ?? DecideByType(c.ModIds, typesByMod)
+                : DecideByType(c.ModIds, typesByMod);
 
             if (winner is null) { AddUnresolved(repA, repB); continue; }
 
@@ -84,36 +84,28 @@ public static class LoadOrderOptimizer
 
         var placements = order.Select(id =>
         {
-            var role = rolesByMod.GetValueOrDefault(id, ModRole.Unknown);
-            var reason = roleReasons != null && roleReasons.TryGetValue(id, out var r) && !string.IsNullOrWhiteSpace(r)
+            var type = typesByMod.GetValueOrDefault(id, ModType.Unknown);
+            var reason = typeReasons != null && typeReasons.TryGetValue(id, out var r) && !string.IsNullOrWhiteSpace(r)
                 ? r
-                : $"{ModLayer.Label(role)}として配置";
-            return new ModPlacement(id, ModLayer.Rank(role), ModLayer.Label(role), reason);
+                : $"{ModTypeInfo.Label(type)}として配置";
+            return new ModPlacement(id, ModTypeInfo.Rank(type), ModTypeInfo.Label(type), reason);
         }).ToList();
 
         return new OptimizeResult(order, reasons, unresolved, placements);
     }
 
-    // 競合する全MODのうち、役割ランクが最大で一意なものを勝者に。
-    // 同点・最大が Unknown のみ等で決められなければ null（＝要確認）。
-    private static string? DecideByRole(IReadOnlyList<string> mods, IReadOnlyDictionary<string, ModRole> roles)
+    // 競合する全MODのうち、種類ランクが最大で一意なものを勝者に（後ろ＝勝ち）。
+    // 同点・最大が Unknown なら自動判断しない（＝要確認）。
+    private static string? DecideByType(IReadOnlyList<string> mods, IReadOnlyDictionary<string, ModType> types)
     {
-        int Rank(ModRole r) => r switch
-        {
-            ModRole.VisualOverride => 2, // 勝たせたい
-            ModRole.BaseLayer => 0,      // 負けてよい
-            _ => 1,                      // Unknown/Music 等
-        };
         var ranked = mods
-            .Select(m => (mod: m, role: roles.GetValueOrDefault(m, ModRole.Unknown)))
-            .Select(x => (x.mod, x.role, rank: Rank(x.role)))
+            .Select(m => (mod: m, type: types.GetValueOrDefault(m, ModType.Unknown)))
+            .Select(x => (x.mod, x.type, rank: ModTypeInfo.Rank(x.type)))
             .OrderByDescending(x => x.rank)
             .ToList();
 
         var top = ranked[0];
-        // 最大ランクが Unknown 由来（決め手なし）なら自動判断しない
-        if (top.role is ModRole.Unknown or ModRole.Music) return null;
-        // 最大ランクが複数いる＝勝者一意でない
+        if (top.type == ModType.Unknown) return null;
         if (ranked.Count(x => x.rank == top.rank) > 1) return null;
         return top.mod;
     }
