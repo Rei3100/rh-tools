@@ -40,7 +40,5 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "テスト失敗が検出されました。コミットをブロックします。`n$($testOutput | Out-String)"
     exit 2
 }
-Write-Host "テスト成功。"
-
 Write-Host "ビルド・テスト成功。コミットを許可します。"
 exit 0

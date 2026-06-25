@@ -103,3 +103,4 @@
 - UserPromptSubmit 注入による微小なトークン増・希釈 → 超短文で緩和。後で skill-auditor の結果を見て調整。
 - 権限緩和（Agent 許可）の安全性 → 破壊的でない操作に限定。既存の安全フックは維持。
 - 監査スキルの Windows 修正は**動作確認を必須**とし、未検証のまま「動く」と言わない。
+- `skipWorkflowUsageWarning` は schema 上 `@internal` 扱い（Task 5 で採用）。Claude Code のアップデートで仕様変更・削除されると「サブエージェントにしますか？」プロンプトが無音で再発する可能性がある。再発時のフォールバック手順: ① `~/.claude/settings.json` の当該キー存在を確認、② `update-config` スキルで再設定、③ それでも出るなら `autoMode.allow` への記法調整を再検討。

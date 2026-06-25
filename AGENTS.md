@@ -30,3 +30,4 @@ dotnet publish src/ReloadedHelper.App -r win-x64 -c Release /p:PublishSingleFile
 ## 運用原則
 
 - ミスが出たら、それを防ぐテスト/リンタールールを足す（再発防止。一度足せば以降のセッションすべてに効く）。
+- コミット前ビルド・テストゲート（`.claude/hooks/pre-commit-guard.ps1`）は Claude Code 経由のコミット時のみ発火する（settings.json の PreToolUse フック経由）。通常のターミナルからの `git commit` には適用されない。
