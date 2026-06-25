@@ -263,28 +263,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
         RebuildEntries();
     }
 
-    internal static IReadOnlyList<(string Winner, string Loser)> LearnFromManualOrder(
-        IReadOnlyList<string> newOrder,
-        IReadOnlyList<FileConflict> conflicts)
-    {
-        int Idx(string id) => new List<string>(newOrder)
-            .FindIndex(x => string.Equals(x, id, StringComparison.OrdinalIgnoreCase));
-
-        var learned = new List<(string, string)>();
-        foreach (var c in conflicts)
-        {
-            if (c.ModIds.Count != 2) continue;
-            var a = c.ModIds[0];
-            var b = c.ModIds[1];
-            int ia = Idx(a), ib = Idx(b);
-            if (ia < 0 || ib < 0) continue;
-            // 後ろ（index大）が勝者
-            if (ia > ib) learned.Add((a, b));
-            else if (ib > ia) learned.Add((b, a));
-        }
-        return learned;
-    }
-
     internal static IReadOnlyDictionary<string, TypeDecision> BuildTypeDecisions(
         IReadOnlyList<ModLoadEntry> entries,
         IReadOnlyDictionary<string, ModInfo> catalog,

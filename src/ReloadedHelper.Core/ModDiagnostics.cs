@@ -51,7 +51,7 @@ public static class ModDiagnostics
 
         foreach (var (key, count) in pairCount)
             result.Add(new Diagnostic(key.Loser, DiagnosticSeverity.Info,
-                $"このMODの {count} 個の項目が「{DisplayName(catalog, key.Winner)}」に上書きされています（読み込み順で後のMODが優先）。意図しない場合は順序を入れ替えてください。"));
+                $"このMODの {count} 個の項目が「{DisplayName(catalog, key.Winner)}」に上書きされています（自動配置で後勝ち側を優先しています）。"));
 
         if (structureWarnings is not null)
             foreach (var w in structureWarnings)
