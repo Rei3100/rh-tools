@@ -26,14 +26,24 @@ public static class ModTypeClassifier
     // 信頼できる特定カテゴリ → 種類。
     private static readonly Dictionary<string, ModType> CategoryMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["skins"] = ModType.SkinTexture, ["skin"] = ModType.SkinTexture,
-        ["textures"] = ModType.SkinTexture, ["texture"] = ModType.SkinTexture, ["texture packs"] = ModType.SkinTexture,
-        ["portraits"] = ModType.Portrait, ["portrait"] = ModType.Portrait,
-        ["models"] = ModType.Model, ["model packs"] = ModType.Model, ["personas"] = ModType.Model, ["persona"] = ModType.Model,
-        ["user interface"] = ModType.Ui, ["ui"] = ModType.Ui,
+        ["skins"] = ModType.SkinTexture,
+        ["skin"] = ModType.SkinTexture,
+        ["textures"] = ModType.SkinTexture,
+        ["texture"] = ModType.SkinTexture,
+        ["texture packs"] = ModType.SkinTexture,
+        ["portraits"] = ModType.Portrait,
+        ["portrait"] = ModType.Portrait,
+        ["models"] = ModType.Model,
+        ["model packs"] = ModType.Model,
+        ["personas"] = ModType.Model,
+        ["persona"] = ModType.Model,
+        ["user interface"] = ModType.Ui,
+        ["ui"] = ModType.Ui,
         ["battles"] = ModType.Battle,
-        ["cutscenes / fmv"] = ModType.Event, ["cutscenes"] = ModType.Event,
-        ["sound"] = ModType.Music, ["music"] = ModType.Music,
+        ["cutscenes / fmv"] = ModType.Event,
+        ["cutscenes"] = ModType.Event,
+        ["sound"] = ModType.Music,
+        ["music"] = ModType.Music,
     };
 
     // 役割がぼやけたカテゴリ → ゲーム機能（土台寄り）。
