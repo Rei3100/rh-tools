@@ -126,4 +126,22 @@ public class ModTypeClassifierTests
         try { Assert.Equal(expected, ModTypeClassifier.Classify(Mod(name), category: "Characters").Type); }
         finally { Directory.Delete(d, true); }
     }
+
+    [Theory]
+    [InlineData("Audio Mix Control", ModType.Music)]
+    [InlineData("Silent Menu Confirm", ModType.Ui)]
+    public void RescueWords_RouteUnknownish(string name, ModType expected)
+    {
+        var d = EmptyDir();
+        try { Assert.Equal(expected, ModTypeClassifier.Classify(Mod(name), category: null).Type); }
+        finally { Directory.Delete(d, true); }
+    }
+
+    [Fact]
+    public void Unknown_RankIsNeutralMiddle_NotLast()
+    {
+        // 正体不明を末尾（最強の上書き位置）に置かない。中間に。
+        Assert.True(ModTypeInfo.Rank(ModType.Unknown) < ModTypeInfo.Rank(ModType.SkinTexture));
+        Assert.True(ModTypeInfo.Rank(ModType.Unknown) > ModTypeInfo.Rank(ModType.Music));
+    }
 }

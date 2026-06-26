@@ -13,13 +13,13 @@ public static class ModTypeClassifier
     // 名前・説明から種類を拾うキーワード。優先順（最初に当たったものを採用）。
     private static readonly (ModType Type, string[] Keywords)[] KeywordRules =
     {
-        (ModType.Music, new[] { "music", "bgm", "sound", "ost", "soundtrack", "song", "サウンド", "音楽" }),
+        (ModType.Music, new[] { "music", "bgm", "sound", "ost", "soundtrack", "song", "サウンド", "音楽", "audio" }),
         (ModType.Portrait, new[] { "portrait", "bustup", "立ち絵", "ポートレート", "バストアップ" }),
         (ModType.Costume, new[] { "costume", "outfit", "衣装", "コスチューム", "swimsuit", "水着" }),
         (ModType.SkinTexture, new[] { "skin", "texture", "スキン", "テクスチャ", "retexture", "recolor", "リテクスチャ", "hair", "eyes", "face" }),
         (ModType.Battle, new[] { "battle", "boss", "bossfight", "戦闘", "ボス", "encounter" }),
         (ModType.Model, new[] { "model", "モデル", "mesh", "mask", "helmet" }),
-        (ModType.Ui, new[] { "interface", "hud", "カットイン", "cutin", "cut-in", "dualsense", "menu", "title", "mainmenu" }),
+        (ModType.Ui, new[] { "interface", "hud", "カットイン", "cutin", "cut-in", "dualsense", "menu", "title", "mainmenu", "confirm" }),
         (ModType.Event, new[] { "cutscene", "fmv", "story", "event", "イベント", "ストーリー", "カットシーン" }),
         (ModType.Gameplay, new[] { "cheat", "fix", "patch", "qol", "tweak", "disable", "difficulty", "修正", "パッチ", "チート" }),
     };
@@ -104,7 +104,7 @@ public static class ModTypeClassifier
         if (ModContentScanner.Scan(folder, mod.ModId).Paths.Count > 0)
             return new(ModType.SkinTexture, "ゲームファイルを上書きするため見た目として配置");
 
-        return new(ModType.Unknown, "手がかりがないため末尾に配置");
+        return new(ModType.Unknown, "種類が特定できないため中間に配置");
     }
 
     private static bool HasSubdir(string folder, string name)

@@ -15,12 +15,13 @@ public static class ModTypeInfo
         ModType.Battle => 2,
         ModType.Event => 3,
         ModType.Music => 4,
-        ModType.Model => 5,
-        ModType.Costume => 6,
-        ModType.SkinTexture => 7,
-        ModType.Portrait => 8,
-        ModType.Ui => 9,
-        _ => 10, // Unknown
+        ModType.Unknown => 5,   // 中立（中間）。末尾に置かない。
+        ModType.Model => 6,
+        ModType.Costume => 7,
+        ModType.SkinTexture => 8,
+        ModType.Portrait => 9,
+        ModType.Ui => 10,
+        _ => 5,
     };
 
     public static string Label(ModType t) => t switch
