@@ -5,3 +5,7 @@ publish/
 
 # scratch (subagent briefs, reports, diff packages, progress ledger)
 .superpowers/
+
+# 検証用ダンプ（実機パス依存・個人データ含む）
+classification-dump.txt
+tests/ReloadedHelper.Core.Tests/_RealInstallDump.cs
