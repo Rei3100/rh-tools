@@ -14,20 +14,20 @@ public static class ConstraintGraphOptimizer
     {
         var present = new HashSet<string>(currentOrder, StringComparer.OrdinalIgnoreCase);
 
-        // 1. 依存辺（dep → mod）。currentOrder にあるもののみ。
+        // 1. 依存辺（dep → mod）。currentOrder にあるもののみ。依存は絶対に守る＝最初に全て入れる。
         var depEdges = new List<(string Before, string After)>();
-        var depAdj = currentOrder.ToDictionary(m => m, _ => new List<string>(), StringComparer.OrdinalIgnoreCase);
+        var adj = currentOrder.ToDictionary(m => m, _ => new List<string>(), StringComparer.OrdinalIgnoreCase);
         foreach (var mod in currentOrder)
             if (dependenciesOf.TryGetValue(mod, out var deps))
                 foreach (var dep in deps)
                     if (present.Contains(dep) && !string.Equals(dep, mod, StringComparison.OrdinalIgnoreCase))
                     {
                         depEdges.Add((dep, mod));
-                        depAdj[dep].Add(mod);
+                        adj[dep].Add(mod);
                     }
 
-        // 2. 依存到達可能性: DepReaches(x, y) = 依存辺だけで x から y へ行けるか。
-        bool DepReaches(string from, string to)
+        // 2. 組み合わせグラフ(依存＋採用済み重なり)での到達可能性。これで循環を未然に防ぐ。
+        bool Reaches(string from, string to)
         {
             if (string.Equals(from, to, StringComparison.OrdinalIgnoreCase)) return true;
             var stack = new Stack<string>();
@@ -38,20 +38,22 @@ public static class ConstraintGraphOptimizer
                 var cur = stack.Pop();
                 if (!seen.Add(cur)) continue;
                 if (string.Equals(cur, to, StringComparison.OrdinalIgnoreCase)) return true;
-                if (depAdj.TryGetValue(cur, out var nexts))
+                if (adj.TryGetValue(cur, out var nexts))
                     foreach (var n in nexts) stack.Push(n);
             }
             return false;
         }
 
-        // 3. 重なり辺（more→fewer）。依存が逆（fewer→more）を強制しているものは捨てる。
+        // 3. 重なり辺（more→fewer）。組み合わせグラフで after→before に既に到達できる＝追加すると循環
+        //    （依存を壊しうる）ので捨てる。依存辺は全て先に入っているので依存は決して壊れない。
         var overlap = OverlapEdges.Build(conflicts, resourceCountByMod);
         var edges = new List<(string Before, string After)>(depEdges);
         foreach (var (before, after) in overlap)
         {
             if (!present.Contains(before) || !present.Contains(after)) continue;
-            if (DepReaches(after, before)) continue; // 依存が after→before を強制＝矛盾 → 捨てる
+            if (Reaches(after, before)) continue;
             edges.Add((before, after));
+            adj[before].Add(after);
         }
 
         // 4. グループ優先度（rank）でソート。

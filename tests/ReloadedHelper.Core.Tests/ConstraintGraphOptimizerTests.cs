@@ -63,6 +63,26 @@ public class ConstraintGraphOptimizerTests
     }
 
     [Fact]
+    public void Dependency_NeverViolated_InMixedDepOverlapCycle()
+    {
+        // counts z(30)>x(20)>y(10)。重なり: x→y, z→x。依存: z は y に依存（y が前）。
+        // 素朴実装だと x→y→z→x の循環で全員 stranded → 現在順(z,y)で末尾追加され依存が壊れる。
+        // 正しい実装は z→x を捨てて依存 (y が z より前) を守る。
+        var order = new[] { "x", "z", "y" }; // z が y より前＝依存違反を誘発する現在順
+        var deps = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase)
+        { ["z"] = new[] { "y" } }; // z depends on y → y must load before z
+        var conflicts = new[]
+        {
+            new FileConflict("file:a", new[] { "x", "y" }, "y"),
+            new FileConflict("file:b", new[] { "z", "x" }, "x"),
+        };
+        var types = Types(("x", ModType.SkinTexture), ("y", ModType.SkinTexture), ("z", ModType.SkinTexture));
+        var r = ConstraintGraphOptimizer.Optimize(order, deps, conflicts, types,
+            Counts(("x", 20), ("y", 10), ("z", 30)));
+        Assert.True(Idx(r, "y") < Idx(r, "z")); // 依存（y が z より前）は絶対守る
+    }
+
+    [Fact]
     public void Placements_CarryTypeLabelAndReason()
     {
         var order = new[] { "a" };
