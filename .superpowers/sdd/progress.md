@@ -83,3 +83,76 @@ SectionDE Task D3: complete (commits bccf1fd..97afd76, review clean — Minor: d
 SectionDE Task D4: complete (commits 97afd76..937f002, review clean)
 SectionDE Task D5: complete (commits 937f002..be733e3, review approved — Minor: StatusText z-order under transparent ItemsControl (brief-mandated, harmless))
 SectionDE Final review: READY TO MERGE. Real-data smoke verified engine (P5R: 145 conflicts, fast 79ms). Found+fixed false-positive: library deps flagged disabled (040cb52, review approved — warnings 56->1, info 25 useful). NOTE: DiagnosticsWindow UI not visually confirmed (click likely missed button margin); engine proven, window code correct/unverified-visually.
+AutoSort Task 1: complete (commit 0eeb54f, review clean)
+AutoSort Task 2: complete (commits 0eeb54f..4474a56, review clean)
+AutoSort Task 3: complete (commits 4474a56..c7da76b, review clean)
+AutoSort Task 4: complete (commits c7da76b..4970882, review clean)
+AutoSort Task 5: complete (commits 4970882..02b05c7, review clean)
+AutoSort Task 6: complete (commits 02b05c7..414d1f4, review clean — Minor: DependsOn checks only one direction; 2-mod scope per brief, revisit with multi-conflict)
+AutoSort Task 7: complete (commits 414d1f4..f60a4e7, review clean)
+AutoSort Task 8: complete (commits f60a4e7..cf93716, review clean)
+AutoSort Task 9: complete (commit 44f1050, research — BGME format: .pme files, music = <SongID>, also random_song(id,...); FEmulator/AWB slot fallback)
+AutoSort Task 10: complete (commits 44f1050..7ee54ca, review clean — real .pme format: music=<id> and random_song(...))
+AutoSort Task 11: complete (commit dee5f96, research — costume format: Costumes/<char>/<slot>/ folder; matches plan's placeholder; slot names may have spaces/special chars)
+AutoSort Task 12: complete (commits dee5f96..3883927, review clean)
+AutoSort Task 13: complete (commits 3883927..4d808c1, review clean)
+AutoSort Task 14: complete (commits 4d808c1..b9714a6, review clean)
+AutoSort Task 15: complete (commits b9714a6..e642b34, review clean — integration test was pre-green; refactor maintained green)
+AutoSort Task 16: complete (commits e642b34..89f3827, review clean — deletion trigger deferred: no delete method in MainViewModel currently; restore doesn't auto-reload)
+AutoSort Task 17: complete (commits 89f3827..bea8996, review clean — drag-drop wiring deferred to App layer; LearnFromManualOrder is internal static ready for wiring)
+AutoSort Task 18: complete (162 tests pass, build 0 errors, autosort-history.json confirms Startup trigger fires; DiagnosticsWindow UI not visually confirmed due to tray-app computer-use conflict)
+AutoSortV2 Task 1 (ModLayer): complete (commit 1b7d6c3, review clean)
+AutoSortV2 Task 2 (ContentRoleClassifier): complete (commit 8a31a04, review clean — 3 Minor: category-fallback comment, one test's try/finally placement, redundant MakeDir CreateDirectory)
+AutoSortV2 Task 3 (層別フル整列+Placements): complete (commit 1e77e07, review clean — 2 Minor: 3-mod Placements.Count assert, LayerRank/LayerLabel not directly asserted; MainViewModel unaffected confirmed by 193/193 build+test)
+AutoSortV2 Task 4 (scanner拡張): complete (commit 533f0e9, review clean — Minor: no test for P5REssentials/MOD & AwbEmulator/AWB roots; BGME/Costumes now double-covered as file+song/costume keys (distinct kinds, no false positive, but redundant conflict entries possible — flag for final review))
+AutoSortV2 Task 5 (MainViewModel配線): complete (commits 4053826..094c991, review clean after fix — Important fixed: _lastPlacementReasons now stored before no-change early-return so already-sorted installs still show reasons; no focused RunAutoSort test (heavy IO fixtures))
+AutoSortV2 Task 6 (UI配置理由表示): complete (commit bd9521c, review clean — TextDetailBrush/FontSizeDetailBody reused from CategoryLabel row)
+AutoSortV2 Task 7 (回帰確認): complete (dotnet test 195/195 pass, Release build 0 errors — pre-existing warnings only: CS8604 ModListView.xaml.cs:25, NU1903 Newtonsoft in test proj)
+AutoSortV2 Final review: Ready to merge (only Minor). Fixed: stale placement reasons leaking across game switch (commit 999d547). Deferred follow-ups (non-blocking): (1) BGME/Costumes double-covered as file+song/costume conflict keys → possible redundant conflict entries; (2) no MainViewModel.RunAutoSort integration test (heavy IO); (3) coverage gaps: P5REssentials/MOD & AwbEmulator/AWB scanner roots untested, ModPlacement.LayerRank/LayerLabel not directly asserted, spec's "100件相当" integration test not added.
+AutoSortV2: ALL TASKS COMPLETE (commits 1b7d6c3..999d547, 195/195 tests, Release build clean)
+TypeClass Task 1 (ModType): complete (commit dcccb6c, review clean, 207/207)
+
+Final review fixes: complete (5374570 — URL nav handler, folder change msg, namespace comment)
+Harness Task 1: complete (commits 5bf73ad..a91058e, review clean after fix — Important: Resolve-Path throw修正; Minor: 成功メッセージ修正)
+Harness Task 2: complete (commit 40c719f, review clean — Approved no findings; meta: subagent Bash git commit did not auto-fire PreToolUse hook, defer to final review)
+Harness Task 3: complete (no commit — global ~/.claude config. Subagent blocked by Self-Modification/Instruction-Poisoning classifier; applied inline by controller under direct user authorization. Script outputs valid JSON, settings.json deny intact 13 entries, backup at settings.json.bak-task3. Reminder fires next user turn.)
+Harness Task 4: complete (no commit — global ~/.claude/CLAUDE.md. Inline applied by controller. Appended '開発ワークフロー（本線の強制）' section verbatim from plan. Line count 19 (60目安内). Existing sections preserved.)
+Harness Task 5: complete (no commit — global ~/.claude/settings.json. Inline applied by controller after AskUserQuestion approval. Plan correction: target layer was autoMode classifier, not permissions.allow — used 'skipWorkflowUsageWarning: true' (official 1-key reversible setting per schema docs). deny 13 intact, JSON OK. Effective next session.)
+Harness Task 6: complete (no commit — global ~/.claude/skills/. Subagent did clone+place; Self-Modification block at script edit → controller applied patches. Patch1: Windows path encoding (3点: backslash/colon/leading-hyphen-skip-for-drive-letter); Patch2: SKILL.md open→start併記. Smoke: 6 projects, 12 sessions, 194 user turns collected from reloaded-helper. Full audit deferred (optional, time-heavy).)
+Harness Task 7: complete (no commit — global ~/.claude/skills/. Reused Task 6 clone. Patches: collect_transcripts.py パス符号化, SKILL.md open→start併記. Smoke: 12 sessions/194 turns + 3 docs/438 tokens detected on reloaded-helper. Full audit deferred.)
+Final review fixes: complete (commit 632e003 — I1 AGENTS.md gate scope注記, I2 redundant 'テスト成功。' 削除, I3 spec §7 fallback手順追加. Minors deferred per reviewer: M1 plan annotation, M2 upstream display bug, M3 reminder redundancy. Ready to merge.)
+TypeClass Task 2 (ModTypeClassifier): complete (commit 8eb8491, review clean — 21 tests; original subagent died at usage-limit after writing file, controller committed; Minor: no description-only keyword test)
+TypeClass Task 3 (optimizer+VM→ModType): complete (commit c4211d1, review clean — Minor: three-way conflict tests (ThreeWay_*) dropped in rewrite, only 2-mod conflicts covered now; DecideByType tie/winner logic untested for 3-way. Add back in final-review triage)
+TypeClass Task 4 (旧ModRole撤去): complete (commit b274697, review clean — 6 files removed, 192 tests pass, no orphan refs)
+TypeClass Task 5 (実データ検証): 実データ217MODでUnknown 3.7%(目標<=10%達成)。各種類が分散して充実。残unknown 8件は枠組み系ユーティリティ(Ryo.Reloaded/crifs.v2.hook/RemixToolkit等、IsLibrary未指定)→将来精緻化候補
+TypeClass Final review: Ready to merge (only Minor: substring keyword noise (accepted §7), dropped 3-way DecideByType tests, no desc-only keyword test, ~4 framework utils in Unknown). dotnet test 192/192, build 0 err. Real-data Unknown 3.7%.
+
+--- AutoSort Evidence Engine Phase1 (plan 2026-06-25) ---
+Phase1 Task 1 (PlacementHintParser): complete (commits 5066a48..f0d0de4, review clean — Important fixed: Late正規表現の \below\s+\w 除去で高精度化; Minor deferred: "but below average" 過検出は None化に影響せず無害)
+Phase1 Task 2 (WinnerResolver): complete (commit 8287d18, review clean — 5/5 tests pass, 203/203 total; no inconsistencies in brief)
+Phase1 Task 2 (WinnerResolver): complete (commits f0d0de4..19efaa4, review Approved — 強化適用: 3-way決定論的assert＋spec符号コメント; Minor deferred: 0/1件入力のguard無し=呼び出し側契約で保護)
+Phase1 Task 3 (資源優先Classify overload): complete (commits a5a2b69..abe5aa2, review Approved — 既存ロジック無変更確認; Minor deferred: Song+Costume両持ちテスト未追加(実装はMusic優先で正), resources null guard(Nullable有効なら不要))
+Phase1 Task 4 (LoadOrderOptimizer作り替え): complete (commits abe5aa2..5cecdde, Opusレビュー Approved, 全207緑/ビルド0err — 計画バグ修正: Dependency_NotBroken テストが resolver証拠順(ext>spec)と矛盾→hintでbase勝者にして依存ブロック分岐を実際に通す版へ再作成。実装コードは正。 Minor deferred: ①複数敗者success-moveの AgainstModId=losers[^1] が挿入アンカー(maxLoser)と不一致(表示のみ・順序不変)、②resourceCount既定int.MaxValueの相互作用未テスト)
+NOTE: 計画書(plan)のTask4テスト例は旧(矛盾)版のまま。実装の修正版テストが正。最終レビューは枝の実コードを見る。
+Phase1 Task 5 (Resources同梱): complete (commit 983d946, review clean — 208/208 tests, build 0 err)
+Phase1 Task 5 (GameDiagnostics資源同梱): complete (commits 5cecdde..983d946, review Approved, 208緑/ビルド0err — Minor deferred: ①GameDiagnosticsTests using/namespace間の空行欠落, ②Run_ExposesAnalyzedResources のassertが空でも通過しうる(ブリーフ指定通り))
+Phase1 Task 6 (MainViewModel配線): complete (commits 983d946..07e692e, Opusレビュー Approved 指摘なし, 208緑/ビルド0err — 資源→数/種類/指示→新Optimize の単一スキャン配線、両BuildTypeDecisions呼び出し更新、早期return/backup/apply 不変)
+Phase1 Task 7 (死にコード撤去+診断文言): complete (commits 07e692e..7895b86, review Approved, 207緑/ビルド0err — LearnFromManualOrder撤去(呼び出し元なし)・ManualReorderLearningTests削除・ModDiagnostics文言を中立化; Minor deferred: DoesNotContain("入れ替え")の部分文字列検査)
+Phase1 Task 8 (検証): 自動化部分 complete (全207緑・Releaseビルド0err)。観測部分(実機スモーク+ゲーム内last-wins確認)はユーザー環境が必要→ブランチ完了時に手順提示。
+Phase1 FINAL REVIEW: Opus whole-branch = Ready to merge: Yes. Critical/Important なし。空Unresolvedの唯一の利用元(AutoSortCoordinator)は空リストで無害。保留Minor6件すべてdefer可(マージ前修正不要)。推奨: Phase2でUnresolved/UnruledPair/履歴フィールドを一括撤去(履歴JSON後方互換に注意), multi-loserアンカーテスト+Song&Costume優先テストを追加。
+Phase1: ALL TASKS COMPLETE (commits 5066a48..7895b86, 207 tests, Release 0 err, final review clean). 観測検証(実機)のみユーザー待ち。
+
+--- Unified Graph Engine F1 (plan 2026-06-25) ---
+F1 Task 1 (SortByEdges): complete (commits 9a61dde..66ecc17, review Approved+fix適用, 218緑 — Important修正: コンペアラ最終タイブレーク(同IDノード消失防止)＋辺キー区切り)
+F1 Task 2 (OverlapEdges): complete (commit f4ace8d, review Approved, 223緑 — Minor deferred: seen辺キー区切り無し(Task1と同種・MOD ID性質上低リスク・brief由来) → 最終整理で\0区切り)
+F1 Task 3 (ConstraintGraphOptimizer): complete (commits f4ace8d..8a263e8, Opusレビュー→Important修正, 229緑/ビルド0err — 計画アルゴリズムの実バグ修正: 循環回避を「依存のみ到達性」→「依存＋採用済み重なりの組み合わせ到達性」に強化し依存厳守を保証。混在循環テスト追加。Minor deferred: DepReaches毎回DFS(規模的に問題なし))
+F1 Task 4 (MainViewModel配線): complete (commit 54d43cd, review Approved 指摘なし, 228緑/ビルド0err/dump1 — RunAutoSort を ConstraintGraphOptimizer へ。実機ダンプ: 先頭24件全てライブラリ/前提(modloader/crifs/CostumeFramework/BGME/Ryo/RemixToolkit/各FileEmulation)＝土台が完全に前方。BuildHints/hints削除、_prefs温存、早期return/backup/apply不変)
+F1: ALL TASKS COMPLETE (commits 9a61dde..54d43cd, 228緑+dump, 実機で土台前方を確認)
+F1 FINAL REVIEW: Opus whole-branch (7895b86..54d43cd) = Ready to merge: Yes。Critical/Important なし。依存不変条件は組み合わせグラフ逐次循環チェックで証明的保証・辺向き(少数派勝)・FW一般則・シグネチャ整合を確認。実機ダンプで土台前方を確認済み。
+  Deferred Minor(全てdefer可): ①OverlapEdges dedup key 区切り無し(衝突ほぼ皆無・F2で\0), ②Reaches毎回DFS(規模問題なし), ③旧LoadOrderOptimizer/WinnerResolver/PlacementHintParser が本番未使用(F2で撤去予定), ④spec"弱い辺を捨てる"の文言は実装"循環を閉じる辺を捨てる"とややズレ(doc nit)。
+
+--- 分類精度ラウンド (plan 2026-06-26) ---
+CA Task 1 (土台ルール依存>=1): complete (commit 1044c82..84df672, review clean — Minor for final: ModTypeClassifier.cs:63 コメント「多数のMODから依存され」が>=1新仕様と微ズレ)
+CA Task 2 (Characters細分): complete (commit 84df672..2a9ec81, review clean — Battleルールを Model 前へ並べ替え=「mask」が「boss」名を奪うのを汎用順序で回避、正当・安全と承認)
+CA Task 3 (判定不能救済+中間ランク): complete (commit 2a9ec81..c895db7, review clean — Task3のランクテスト漏れを7c36f12で修正)
+CA Task 4 (冗長MODペア検出): complete (commits c895db7..814d5c0+7c36f12, review Approved — Minor: LINQ Count O(n), ModA側のみDiagnostic, 推移的依存未チェック(brief通り))

@@ -1,7 +1,15 @@
 namespace ReloadedHelper.Core;
 
-// 統一制約グラフ：依存辺(ハード)＋重なり辺(ハード・依存と循環するものは捨てる)を集め、
-// (グループrank昇順 → 現在順) 優先度で安定トポロジカルソート。Unresolved は出さない。
+public sealed record PlacementReason(string MovedModId, string AgainstModId, string Message);
+
+public sealed record ModPlacement(string ModId, int LayerRank, string LayerLabel, string Reason);
+
+public sealed record OptimizeResult(
+    IReadOnlyList<string> Order,
+    IReadOnlyList<PlacementReason> Reasons,
+    IReadOnlyList<(string A, string B)> Unresolved,
+    IReadOnlyList<ModPlacement> Placements);
+
 public static class ConstraintGraphOptimizer
 {
     public static OptimizeResult Optimize(
