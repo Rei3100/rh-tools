@@ -115,4 +115,15 @@ public class ModTypeClassifierTests
         }
         finally { Directory.Delete(d, true); }
     }
+
+    [Theory]
+    [InlineData("Black Hair Futaba", ModType.SkinTexture)]   // 髪 → スキン
+    [InlineData("Dynamic Main Menu", ModType.Ui)]            // メニュー → UI
+    [InlineData("No Helmet Featherman", ModType.Model)]      // 兜 → モデル
+    public void CharacterParts_RouteByName(string name, ModType expected)
+    {
+        var d = EmptyDir();
+        try { Assert.Equal(expected, ModTypeClassifier.Classify(Mod(name), category: "Characters").Type); }
+        finally { Directory.Delete(d, true); }
+    }
 }

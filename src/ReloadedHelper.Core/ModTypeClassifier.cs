@@ -16,10 +16,10 @@ public static class ModTypeClassifier
         (ModType.Music, new[] { "music", "bgm", "sound", "ost", "soundtrack", "song", "サウンド", "音楽" }),
         (ModType.Portrait, new[] { "portrait", "bustup", "立ち絵", "ポートレート", "バストアップ" }),
         (ModType.Costume, new[] { "costume", "outfit", "衣装", "コスチューム", "swimsuit", "水着" }),
-        (ModType.SkinTexture, new[] { "skin", "texture", "スキン", "テクスチャ", "retexture", "recolor", "リテクスチャ" }),
-        (ModType.Model, new[] { "model", "モデル", "mesh" }),
-        (ModType.Ui, new[] { "interface", "hud", "カットイン", "cutin", "cut-in", "dualsense" }),
+        (ModType.SkinTexture, new[] { "skin", "texture", "スキン", "テクスチャ", "retexture", "recolor", "リテクスチャ", "hair", "eyes", "face" }),
         (ModType.Battle, new[] { "battle", "boss", "bossfight", "戦闘", "ボス", "encounter" }),
+        (ModType.Model, new[] { "model", "モデル", "mesh", "mask", "helmet" }),
+        (ModType.Ui, new[] { "interface", "hud", "カットイン", "cutin", "cut-in", "dualsense", "menu", "title", "mainmenu" }),
         (ModType.Event, new[] { "cutscene", "fmv", "story", "event", "イベント", "ストーリー", "カットシーン" }),
         (ModType.Gameplay, new[] { "cheat", "fix", "patch", "qol", "tweak", "disable", "difficulty", "修正", "パッチ", "チート" }),
     };
