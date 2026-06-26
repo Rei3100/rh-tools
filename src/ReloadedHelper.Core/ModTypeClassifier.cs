@@ -62,7 +62,7 @@ public static class ModTypeClassifier
         // 多数のMODから依存され、かつ自分はゲームファイル（資源）を持たない＝枠組み（土台）。
         // 例: modloader(依存144)・crifs.v2.hook(25)・CostumeFramework・BGME.Framework・Ryo 等。
         // 資源を大量に持つ人気コンテンツ（パッチ多数のスキン等）とは「資源ゼロ」で区別される。
-        if (dependentsCount >= 2 && resources.Count == 0)
+        if (dependentsCount >= 1 && resources.Count == 0)
             return new(ModType.Library, $"{dependentsCount}個のMODから依存される土台のため前方に配置");
         if (resources.Any(r => r.Kind == ResourceKind.Song))
             return new(ModType.Music, "曲データを書き換えるため音楽として配置");

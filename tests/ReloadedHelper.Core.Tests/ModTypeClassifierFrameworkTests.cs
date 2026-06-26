@@ -34,10 +34,18 @@ public class ModTypeClassifierFrameworkTests
     }
 
     [Fact]
-    public void FewDependents_NoResources_IsNotForcedFramework()
+    public void SingleDependent_NoResources_IsFrameworkLibrary()
     {
-        // 依存1以下は土台扱いしない（偶発的な単一依存で誤判定しない）。
-        var d = ModTypeClassifier.Classify(Mod("Some Skin"), null, None, dependentsCount: 1);
+        // 依存1でも資源0なら前提物（誰かに参照される土台）。
+        var d = ModTypeClassifier.Classify(Mod("Texture Fixes Project"), null, None, dependentsCount: 1);
+        Assert.Equal(ModType.Library, d.Type);
+    }
+
+    [Fact]
+    public void ZeroDependents_NoResources_IsNotForcedFramework()
+    {
+        // 誰からも依存されないなら土台扱いしない。
+        var d = ModTypeClassifier.Classify(Mod("Some Mod"), null, None, dependentsCount: 0);
         Assert.NotEqual(ModType.Library, d.Type);
     }
 
