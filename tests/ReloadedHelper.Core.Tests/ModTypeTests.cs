@@ -12,12 +12,12 @@ public class ModTypeTests
     [InlineData(ModType.Battle, 2)]
     [InlineData(ModType.Event, 3)]
     [InlineData(ModType.Music, 4)]
-    [InlineData(ModType.Model, 5)]
-    [InlineData(ModType.Costume, 6)]
-    [InlineData(ModType.SkinTexture, 7)]
-    [InlineData(ModType.Portrait, 8)]
-    [InlineData(ModType.Ui, 9)]
-    [InlineData(ModType.Unknown, 10)]
+    [InlineData(ModType.Unknown, 5)]
+    [InlineData(ModType.Model, 6)]
+    [InlineData(ModType.Costume, 7)]
+    [InlineData(ModType.SkinTexture, 8)]
+    [InlineData(ModType.Portrait, 9)]
+    [InlineData(ModType.Ui, 10)]
     public void Rank_FrontToBack(ModType t, int expected)
         => Assert.Equal(expected, ModTypeInfo.Rank(t));
 

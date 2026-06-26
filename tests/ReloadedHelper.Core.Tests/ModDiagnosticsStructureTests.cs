@@ -6,12 +6,12 @@ namespace ReloadedHelper.Core.Tests;
 
 public class ModDiagnosticsStructureTests
 {
-    private static GameInfo Game() => new("p5r","P5R","",null,
-        new[]{"m"}, new[]{"m"}, "");
+    private static GameInfo Game() => new("p5r", "P5R", "", null,
+        new[] { "m" }, new[] { "m" }, "");
     private static Dictionary<string, ModInfo> Catalog() => new()
     {
-        ["m"] = new("m","M","","1","",Array.Empty<string>(),Array.Empty<string>(),
-            Array.Empty<string>(), new[]{"p5r"}, null,null,null,null,""),
+        ["m"] = new("m", "M", "", "1", "", Array.Empty<string>(), Array.Empty<string>(),
+            Array.Empty<string>(), new[] { "p5r" }, null, null, null, null, ""),
     };
 
     [Fact]

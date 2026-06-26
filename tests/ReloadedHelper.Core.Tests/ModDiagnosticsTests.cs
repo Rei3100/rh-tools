@@ -56,6 +56,20 @@ public class ModDiagnosticsTests
     }
 
     [Fact]
+    public void ConflictDiagnostic_DoesNotTellUserToReorder()
+    {
+        // ユーザーは並び替えしない・できない。手動並べ替えを促す文言を出さない。
+        var cat = new Dictionary<string, ModInfo>
+        {
+            ["loser"] = Mod("loser", new[] { "p5r.exe" }),
+            ["winner"] = Mod("winner", new[] { "p5r.exe" }),
+        };
+        var conflicts = new[] { new FileConflict("file:a", new[] { "loser", "winner" }, "winner") };
+        var diags = ModDiagnostics.Analyze(Game("p5r.exe", new[] { "loser", "winner" }), cat, conflicts);
+        Assert.DoesNotContain(diags, d => d.Message.Contains("入れ替え"));
+    }
+
+    [Fact]
     public void Info_on_overwritten_loser_aggregated()
     {
         var cat = new Dictionary<string, ModInfo>

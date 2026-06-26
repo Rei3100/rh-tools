@@ -12,7 +12,8 @@ public static class ModDiagnostics
         GameInfo game,
         IReadOnlyDictionary<string, ModInfo> catalog,
         IReadOnlyList<FileConflict> conflicts,
-        IReadOnlyList<StructureWarning>? structureWarnings = null)
+        IReadOnlyList<StructureWarning>? structureWarnings = null,
+        IReadOnlyList<RedundantPair>? redundantPairs = null)
     {
         var enabled = new HashSet<string>(game.EnabledMods, StringComparer.OrdinalIgnoreCase);
         var result = new List<Diagnostic>();
@@ -51,11 +52,16 @@ public static class ModDiagnostics
 
         foreach (var (key, count) in pairCount)
             result.Add(new Diagnostic(key.Loser, DiagnosticSeverity.Info,
-                $"このMODの {count} 個の項目が「{DisplayName(catalog, key.Winner)}」に上書きされています（読み込み順で後のMODが優先）。意図しない場合は順序を入れ替えてください。"));
+                $"このMODの {count} 個の項目が「{DisplayName(catalog, key.Winner)}」に上書きされています（自動配置で後勝ち側を優先しています）。"));
 
         if (structureWarnings is not null)
             foreach (var w in structureWarnings)
                 result.Add(new Diagnostic(w.ModId, DiagnosticSeverity.Warning, w.Message));
+
+        if (redundantPairs is not null)
+            foreach (var p in redundantPairs)
+                result.Add(new Diagnostic(p.ModA, DiagnosticSeverity.Info,
+                    $"「{DisplayName(catalog, p.ModB)}」と内容が大きく重複しています（{p.SharedCount}項目）。片方の無効化を検討してください。"));
 
         return result;
     }

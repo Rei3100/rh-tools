@@ -223,7 +223,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!File.Exists(configPath)) return;
 
         var diagResult = GameDiagnostics.Run(game, _catalog);
-        var decisions = BuildTypeDecisions(_allEntries, _catalog);
+
+        var resourcesByMod = diagResult.Resources.ToDictionary(
+            r => r.ModId, r => r.Resources, StringComparer.OrdinalIgnoreCase);
+        var resourceCount = diagResult.Resources.ToDictionary(
+            r => r.ModId, r => r.Resources.Count, StringComparer.OrdinalIgnoreCase);
+
+        var decisions = BuildTypeDecisions(_allEntries, _catalog, resourcesByMod);
         var types = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Type, StringComparer.OrdinalIgnoreCase);
         var typeReasons = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Reason, StringComparer.OrdinalIgnoreCase);
         var depMap = _catalog.ToDictionary(
@@ -231,7 +237,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             kv => (IReadOnlyList<string>)kv.Value.Dependencies,
             StringComparer.OrdinalIgnoreCase);
 
-        var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts, types, _prefs, typeReasons);
+        var result = ConstraintGraphOptimizer.Optimize(
+            game.SortedMods, depMap, diagResult.Conflicts, types, resourceCount, typeReasons);
 
         // 順序変化の有無に関わらず配置理由は常に保存し UI に反映する。
         _lastPlacementReasons = result.Placements.ToDictionary(
@@ -255,39 +262,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
         RebuildEntries();
     }
 
-    internal static IReadOnlyList<(string Winner, string Loser)> LearnFromManualOrder(
-        IReadOnlyList<string> newOrder,
-        IReadOnlyList<FileConflict> conflicts)
-    {
-        int Idx(string id) => new List<string>(newOrder)
-            .FindIndex(x => string.Equals(x, id, StringComparison.OrdinalIgnoreCase));
-
-        var learned = new List<(string, string)>();
-        foreach (var c in conflicts)
-        {
-            if (c.ModIds.Count != 2) continue;
-            var a = c.ModIds[0];
-            var b = c.ModIds[1];
-            int ia = Idx(a), ib = Idx(b);
-            if (ia < 0 || ib < 0) continue;
-            // 後ろ（index大）が勝者
-            if (ia > ib) learned.Add((a, b));
-            else if (ib > ia) learned.Add((b, a));
-        }
-        return learned;
-    }
-
     internal static IReadOnlyDictionary<string, TypeDecision> BuildTypeDecisions(
         IReadOnlyList<ModLoadEntry> entries,
-        IReadOnlyDictionary<string, ModInfo> catalog)
+        IReadOnlyDictionary<string, ModInfo> catalog,
+        IReadOnlyDictionary<string, IReadOnlyList<Analyzers.ResourceKey>> resourcesByMod)
     {
+        // 依存被参照数（このMODを何個のMODが依存先に挙げているか）＝土台らしさの指標。
+        var dependents = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kv in catalog)
+            foreach (var dep in kv.Value.Dependencies)
+                dependents[dep] = dependents.TryGetValue(dep, out var n) ? n + 1 : 1;
+
         var map = new Dictionary<string, TypeDecision>(StringComparer.OrdinalIgnoreCase);
         foreach (var e in entries)
         {
             var info = e.Info ?? (catalog.TryGetValue(e.ModId, out var ci) ? ci : null);
+            var res = resourcesByMod.TryGetValue(e.ModId, out var r)
+                ? r : System.Array.Empty<Analyzers.ResourceKey>();
+            var deps = dependents.TryGetValue(e.ModId, out var dc) ? dc : 0;
             map[e.ModId] = info is null
                 ? new TypeDecision(ModType.Unknown, "情報が無いため末尾に配置")
-                : ModTypeClassifier.Classify(info, e.Category);
+                : ModTypeClassifier.Classify(info, e.Category, res, deps);
         }
         return map;
     }
