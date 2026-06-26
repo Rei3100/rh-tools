@@ -232,14 +232,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var decisions = BuildTypeDecisions(_allEntries, _catalog, resourcesByMod);
         var types = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Type, StringComparer.OrdinalIgnoreCase);
         var typeReasons = decisions.ToDictionary(kv => kv.Key, kv => kv.Value.Reason, StringComparer.OrdinalIgnoreCase);
-        var hints = BuildHints(_allEntries, _catalog);
         var depMap = _catalog.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<string>)kv.Value.Dependencies,
             StringComparer.OrdinalIgnoreCase);
 
-        var result = LoadOrderOptimizer.Optimize(appId, game.SortedMods, depMap, diagResult.Conflicts,
-            types, _prefs, typeReasons, resourceCount, hints);
+        var result = ConstraintGraphOptimizer.Optimize(
+            game.SortedMods, depMap, diagResult.Conflicts, types, resourceCount, typeReasons);
 
         // 順序変化の有無に関わらず配置理由は常に保存し UI に反映する。
         _lastPlacementReasons = result.Placements.ToDictionary(
@@ -284,19 +283,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
             map[e.ModId] = info is null
                 ? new TypeDecision(ModType.Unknown, "情報が無いため末尾に配置")
                 : ModTypeClassifier.Classify(info, e.Category, res, deps);
-        }
-        return map;
-    }
-
-    private static IReadOnlyDictionary<string, PlacementHint> BuildHints(
-        IReadOnlyList<ModLoadEntry> entries,
-        IReadOnlyDictionary<string, ModInfo> catalog)
-    {
-        var map = new Dictionary<string, PlacementHint>(StringComparer.OrdinalIgnoreCase);
-        foreach (var e in entries)
-        {
-            var info = e.Info ?? (catalog.TryGetValue(e.ModId, out var ci) ? ci : null);
-            if (info is not null) map[e.ModId] = PlacementHintParser.Parse(info);
         }
         return map;
     }
