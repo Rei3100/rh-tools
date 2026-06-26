@@ -5,7 +5,8 @@ namespace ReloadedHelper.Core;
 public sealed record GameDiagnosticsResult(
     IReadOnlyList<FileConflict> Conflicts,
     IReadOnlyList<Diagnostic> Diagnostics,
-    IReadOnlyList<ModResources> Resources);
+    IReadOnlyList<ModResources> Resources,
+    IReadOnlyList<RedundantPair> RedundantPairs);
 
 public static class GameDiagnostics
 {
@@ -32,7 +33,8 @@ public static class GameDiagnostics
         }
 
         var conflicts = ConflictDetector.Detect(ordered);
-        var diagnostics = ModDiagnostics.Analyze(game, catalog, conflicts, structureWarnings);
-        return new GameDiagnosticsResult(conflicts, diagnostics, ordered);
+        var redundant = RedundancyDetector.Detect(ordered, catalog);
+        var diagnostics = ModDiagnostics.Analyze(game, catalog, conflicts, structureWarnings, redundant);
+        return new GameDiagnosticsResult(conflicts, diagnostics, ordered, redundant);
     }
 }
